@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2047
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcFrontend", "ProcFrontend\ProcFrontend.vcxproj", "{2FFCF62D-CF63-4557-9D62-06946FD355F3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcBackend", "ProcBackend\ProcBackend.vcxitems", "{44849872-9BC3-401D-A64A-72A367CF7125}"
+EndProject
+Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		ProcBackend\ProcBackend.vcxitems*{2ffcf62d-cf63-4557-9d62-06946fd355f3}*SharedItemsImports = 4
+		ProcBackend\ProcBackend.vcxitems*{44849872-9bc3-401d-a64a-72a367cf7125}*SharedItemsImports = 9
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Debug|x64.ActiveCfg = Debug|x64
+		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Debug|x64.Build.0 = Debug|x64
+		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Debug|x86.ActiveCfg = Debug|Win32
+		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Debug|x86.Build.0 = Debug|Win32
+		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Release|x64.ActiveCfg = Release|x64
+		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Release|x64.Build.0 = Release|x64
+		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Release|x86.ActiveCfg = Release|Win32
+		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9C750EB7-55BC-4DA9-A9B1-69D52D443EAE}
+	EndGlobalSection
+EndGlobal
