@@ -1,14 +1,14 @@
-#include "stdafx.h"
 #include <iostream>
-#include "Processor.h"
+#include "stdafx.h"
 
-const int InternalMemorySize = 4;
-const int RamMemorySize = 8;
+#include "ComputerState.h"
+
+const int InternalMemorySize = 16;
+const int RamMemorySize      = 32;
 
 using namespace std;
 
-using CurProcessor = Processor<InternalMemorySize, RamMemorySize>;
-
+using Computer = ComputerState<InternalMemorySize, RamMemorySize>;
 
 template<int Size>
 void print_memory(const bitset<Size>& mem, int bytes_in_line) {
@@ -23,19 +23,21 @@ void print_memory(const bitset<Size>& mem, int bytes_in_line) {
 	}
 }
 
-void print_state(const CurProcessor& proc) {
+void print_state(const Computer& state) {
 	cout << endl << "Internal Memory:" << endl;
-	print_memory(proc.get_internal_memory(), 4);
+	print_memory(state.CPU.get_all(), 8);
 
 	cout << endl << "RAM Memory:" << endl;
-	print_memory(proc.get_ram_memory(), 4);
+	print_memory(state.RAM.get_all(), 8);
 }
 
 int main() {
-	auto mem = bitset<RamMemorySize>(0b01010110);
-	CurProcessor proc(mem);
+	auto ram_mem = bitset<RamMemorySize>(0b01010110);
+	auto comp = Computer(ram_mem);
 
-	print_state(proc);
+	comp.CPU.set<0, 1>(0b1);
+
+	print_state(comp);
 
 	int x;
 	cin >> x;
