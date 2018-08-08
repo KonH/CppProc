@@ -17,5 +17,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)BitUtils.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ComputerState.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MemoryState.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Reference.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)RegisterSet.h" />
   </ItemGroup>
 </Project>
