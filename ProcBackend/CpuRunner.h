@@ -1,9 +1,12 @@
 #pragma once
 
+#include <functional>
+#include <map>
+
 template<int BS, int IMS, int RMS>
 class CpuRunner {
 public:
-	bool Tick(const RegisterSet<BS, IMS>& regs, MemoryState<IMS>& cpu, MemoryState<RMS>& ram) {
+	bool Tick(const RegisterSet<BS, IMS>& regs, MemoryState<IMS>& cpu, MemoryState<RMS>& ram) const {
 		if (cpu.get(regs.Terminated).test(0)) {
 			return false; // Terminated
 		}
@@ -17,19 +20,27 @@ public:
 	}
 
 private:
-	void perform_command(const RegisterSet<BS, IMS>& regs, MemoryState<IMS>& cpu, MemoryState<RMS>& ram, const bitset<BS * 3>& command) {
-		// todo: dispatch
+	using CommandHandler = 
+		function<void(const RegisterSet<BS, IMS>&, MemoryState<IMS>&, MemoryState<RMS>&, const bitset<BS>&, const bitset<BS>&)>;
+
+	void perform_command(const RegisterSet<BS, IMS>& regs, MemoryState<IMS>& cpu, MemoryState<RMS>& ram, const bitset<BS * 3>& command) const {
 		auto code = BitUtils::get_bits<BS, BS * 3>(command, 0);
 		auto arg1 = BitUtils::get_bits<BS, BS * 3>(command, BS);
 		auto arg2 = BitUtils::get_bits<BS, BS * 3>(command, BS * 2);
 
-		switch (code.to_ulong()) {
-		case 0b0001:
-			cpu.set(regs.Terminated, bitset<1>(0b1)); // temp
-			// todo: increase pointer
-			break;
-		default:
-			break;
+		auto code_value = code.to_ulong();
+		auto cmd_iter = _commands.find(code_value);
+		if (cmd_iter != _commands.end()) {
+			CommandHandler cmd = _commands.at(code_value);
+			cmd(regs, cpu, ram, arg1, arg2);
 		}
+	}
+
+	map<unsigned long, CommandHandler> _commands = {
+		{ 0b0001, &CpuRunner::RST } // RST _ _ - set Terminated flag
+	};
+
+	static void RST(const RegisterSet<BS, IMS>& regs, MemoryState<IMS>& cpu, MemoryState<RMS>& ram, const bitset<BS>& a, const bitset<BS>& b) {
+		cpu.set(regs.Terminated, bitset<1>(0b1));
 	}
 };
