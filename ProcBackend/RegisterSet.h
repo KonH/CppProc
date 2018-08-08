@@ -4,7 +4,7 @@
 
 const int ServiceRegisters = 4;
 
-template<int InternalMemorySize, int BaseSize>
+template<int BaseSize, int InternalMemorySize>
 class RegisterSet {
 public:
 	static_assert(BaseSize >= 4);

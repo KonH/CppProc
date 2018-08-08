@@ -3,8 +3,8 @@
 template<int TSize>
 class Reference {
 public:
-	const int Address;
-	const int Size = TSize;
+	const unsigned long Address;
+	const unsigned long Size = TSize;
 
-	Reference(int address):Address(address) { }
+	Reference(unsigned long address):Address(address) { }
 };

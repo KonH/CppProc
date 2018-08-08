@@ -37,6 +37,8 @@ void print_registers(const Computer& state) {
 	auto flags = cpu.get(regs.Flags);
 	auto terminated = cpu.get(regs.Terminated);
 	cout << "Flags: " << flags << " (terminated: " << terminated << ")" << endl;
+	auto counter = cpu.get(regs.Counter);
+	cout << "Counter: " << counter << endl;
 	auto ip = cpu.get(regs.IP);
 	cout << "IP: " << ip << endl;
 	auto ap = cpu.get(regs.AP);
@@ -62,13 +64,19 @@ void print_state(const Computer& state) {
 }
 
 int main() {
-	auto ram_mem = bitset<RamMemorySize>(0b01010110);
+	auto ram_mem = bitset<RamMemorySize>(
+		0b0001);
 	auto comp = Computer(ram_mem);
 
-	print_state(comp);
+	auto running = true;
+	while (running) {
+		print_state(comp);
+		running = comp.Tick();
+		cout << endl;
+		cin.get();
+	}
 
-	int x;
-	cin >> x;
-
+	cout << endl << "Execution done." << endl;
+	cin.get();
 	return 0;
 }
