@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bitset>
+#include <tuple>
 
 using std::bitset;
 
@@ -31,5 +32,33 @@ namespace BitUtils {
 		for (int i = 0; i < BitSize; i++) {
 			set[address + i] = value[i];
 		}
+	}
+
+	template<int BitSize>
+	bitset<BitSize> get_zero() {
+		return bitset<BitSize>(0b0);
+	}
+
+	template<int BitSize>
+	bitset<BitSize> get_one() {
+		return bitset<BitSize>(0b1);
+	}
+
+	auto plus(bool a, bool b, bool carry) {
+		auto result    = carry ? a == b : a != b;
+		auto new_carry = (a && b) || (carry && a) || (carry && b);
+		return std::make_tuple(result, new_carry);
+	}
+
+	template<int BitSize>
+	auto plus(const bitset<BitSize>& a, const bitset<BitSize>& b) {
+		bitset<BitSize> result = { 0 };
+		auto prev_carry = false;
+		for (int i = 0; i < BitSize; i++) {
+			auto [res, carry] = plus(a.test(i), b.test(i), prev_carry);
+			result[i] = res;
+			prev_carry = carry;
+		}
+		return std::make_tuple(result, prev_carry);
 	}
 }

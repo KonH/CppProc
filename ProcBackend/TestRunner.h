@@ -2,6 +2,7 @@
 
 #include <set>
 #include <map>
+#include <tuple>
 #include <string>
 #include <vector>
 #include <sstream>
@@ -12,6 +13,8 @@ using std::set;
 using std::map;
 using std::cerr;
 using std::endl;
+
+using std::tuple;
 using std::string;
 using std::vector;
 using std::ostream;
@@ -62,6 +65,13 @@ namespace TestUtils {
 			os << kv.first << ": " << kv.second;
 		}
 		return os << "}";
+	}
+
+	template<class V1, class V2>
+	ostream& operator <<(ostream& os, const tuple<V1, V2>& t) {
+		const auto& [v1, v2] = t;
+		os << "{" << v1 << ", " << v2 << "}";
+		return os;
 	}
 
 	template<class T, class U>
