@@ -52,6 +52,9 @@ namespace Tests {
 		x = 0b0110; y = 0b0011; expected = { 0b1001, false };
 		assert_equal(BitUtils::plus(x, y), expected, "0110 + 0011 = 1001 (carry = 0)");
 
+		x = 0b0010; y = 0b0110; expected = { 0b1000, false };
+		assert_equal(BitUtils::plus(x, y), expected, "0010 + 0110 = 1000 (carry = 0)");
+
 		x = 0b1000; y = 0b0111; expected = { 0b1111, false };
 		assert_equal(BitUtils::plus(x, y), expected, "1000 + 0111 = 1111 (carry = 0)");
 
@@ -97,13 +100,22 @@ namespace Tests {
 		assert_equal(cmp.State.RAM.get_all(), ram);
 	}
 
+	void command_NOOP() {
+		auto cmp = Computer<4, 16, 12>(0b0001);
+		cmp.tick();
+		auto counter = cmp.State.CPU.get(cmp.Registers.Counter);
+		assert_equal(counter, 0b1);
+		auto ip = cmp.State.CPU.get(cmp.Registers.Counter);
+		assert_equal(counter, 4 * 3);
+	}
+
 	void command_RST() {
 		auto cmp = Computer<4, 16, 12>(0b0001);
 		auto t1_performing = cmp.tick();
-		assert(t1_performing);
+		assert(t1_performing, "performing");
 		auto t2_terminated = !cmp.tick();
-		assert(t2_terminated);
-		assert_equal(cmp.State.RAM.get(cmp.Registers.Terminated), 0b1);
+		assert(t2_terminated, "terminated");
+		assert_equal(cmp.State.RAM.get(cmp.Registers.Terminated), 0b1, "flag is set");
 	}
 
 	void test_utils() {

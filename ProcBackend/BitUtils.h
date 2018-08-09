@@ -44,6 +44,11 @@ namespace BitUtils {
 		return bitset<BitSize>(0b1);
 	}
 
+	template<int BitSize>
+	bitset<BitSize> get_set(unsigned long value) {
+		return bitset<BitSize>(value);
+	}
+
 	auto plus(bool a, bool b, bool carry) {
 		auto result    = carry ? a == b : a != b;
 		auto new_carry = (a && b) || (carry && a) || (carry && b);

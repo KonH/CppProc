@@ -31,11 +31,51 @@ namespace Logics {
 			auto command_body = ram.get(command);
 			perform_command(regs, state, command_body);
 			// todo: check invalid references
-			// todo: increase counter
+			// todo: fix strange overflow
 			return true; // Continue execution
 		}
 
 	private:
+		template<int Size>
+		static bool add_to_register(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, Reference<Size> ref, bitset<Size> value) {
+			auto old_value = state.CPU.get(ref);
+			auto[new_value, overflow] = BitUtils::plus(old_value, value);
+			state.CPU.set(ref, new_value);
+			if (overflow) {
+				state.CPU.set<1>(regs.Overflow, 0b1);
+			}
+			return overflow;
+		}
+
+		template<int Size>
+		static bool inc_register(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, Reference<Size> ref) {
+			return add_to_register(regs, state, ref, BitUtils::get_one<Size>());
+		}
+
+		static void raise_fatal(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state) {
+			state.CPU.set<1>(regs.Fatal, 0b1);
+			state.CPU.set<1>(regs.Terminated, 0b1);
+		}
+
+		static void inc_counter(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state) {
+			auto overflow = inc_register(regs, state, regs.Counter);
+			if (overflow) {
+				raise_fatal(regs, state);
+			}
+		}
+
+		static void bump_ip(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state) {
+			auto overflow = add_to_register<BS>(regs, state, regs.IP, BitUtils::get_set<BS>(BS * 3));
+			if (overflow) {
+				raise_fatal(regs, state);
+			}
+		}
+
+		static void set_next_operation(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state) {
+			inc_counter(regs, state);
+			bump_ip(regs, state);
+		}
+
 		using CommandHandler =
 			function<void(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>&, const bitset<BS>&)>;
 
@@ -53,8 +93,13 @@ namespace Logics {
 		}
 
 		map<unsigned long, CommandHandler> _commands = {
-			{ 0b0001, &CpuRunner::RST } // RST _ _ - set Terminated flag
+			{ 0b0000, &CpuRunner::NOOP }, // NOOP _ _ - no operation, just bump IP & inc Counter
+			{ 0b0001, &CpuRunner::RST  }, // RST _ _ - set Terminated flag
 		};
+
+		static void NOOP(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
+			set_next_operation(regs, state);
+		}
 
 		static void RST(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
 			state.CPU.set(regs.Terminated, bitset<1>(0b1));
