@@ -1,10 +1,12 @@
 #pragma once
 
-template<int TSize>
-class Reference {
-public:
-	const unsigned long Address;
-	const unsigned long Size = TSize;
+namespace Core {
+	template<int TSize>
+	class Reference {
+	public:
+		const unsigned long Address;
+		const unsigned long Size = TSize;
 
-	Reference(unsigned long address):Address(address) { }
-};
+		Reference(unsigned long address) :Address(address) {}
+	};
+}

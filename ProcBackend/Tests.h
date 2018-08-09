@@ -2,25 +2,30 @@
 
 #include <bitset>
 
+#include "Computer.h"
 #include "TestRunner.h"
-#include "ComputerState.h"
 
-using namespace std;
+using std::bitset;
+
+using Core::Computer;
+using TestUtils::TestRunner;
+using TestUtils::assert;
+using TestUtils::assert_equal;
 
 namespace Tests {
 	void state_init() {
 		auto ram = bitset<4>(0b0101);
-		auto cmp = ComputerState<4, 16, 4>(ram);
-		assert_equal(cmp.RAM.get_all(), ram);
+		auto cmp = Computer<4, 16, 4>(ram);
+		assert_equal(cmp.State.RAM.get_all(), ram);
 	}
 
 	void command_RST() {
-		auto cmp = ComputerState<4, 16, 12>(0b0001);
+		auto cmp = Computer<4, 16, 12>(0b0001);
 		auto t1_performing = cmp.tick();
 		assert(t1_performing);
 		auto t2_terminated = !cmp.tick();
 		assert(t2_terminated);
-		assert_equal(cmp.RAM.get(cmp.Registers.Terminated), 0b1);
+		assert_equal(cmp.State.RAM.get(cmp.Registers.Terminated), 0b1);
 	}
 
 	void test_state() {

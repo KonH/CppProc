@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)BitUtils.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Computer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ComputerState.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)CpuRunner.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MemoryState.h" />

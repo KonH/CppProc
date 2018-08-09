@@ -2,18 +2,17 @@
 
 #include <bitset>
 
-using namespace std;
+using std::bitset;
 
-class BitUtils {
-public:
+namespace BitUtils {
 	template<int Address, int BitSize, int SetSize>
-	static bitset<BitSize> get_bits(const bitset<SetSize>& set) {
+	bitset<BitSize> get_bits(const bitset<SetSize>& set) {
 		static_assert(Address + BitSize <= SetSize);
 		return get_bits(set, Address);
 	}
 
 	template<int BitSize, int SetSize>
-	static bitset<BitSize> get_bits(const bitset<SetSize>& set, int address) {
+	bitset<BitSize> get_bits(const bitset<SetSize>& set, int address) {
 		bitset<BitSize> value = { 0 };
 		for (int i = 0; i < BitSize; i++) {
 			value[i] = set[address + i];
@@ -22,15 +21,15 @@ public:
 	}
 
 	template<int Address, int BitSize, int SetSize>
-	static void set_bits(bitset<SetSize>& set, const bitset<BitSize>& value) {
+	void set_bits(bitset<SetSize>& set, const bitset<BitSize>& value) {
 		static_assert(Address + BitSize <= SetSize);
 		set_bits(set, Address, value);
 	}
 
 	template<int BitSize, int SetSize>
-	static void set_bits(bitset<SetSize>& set, int address, const bitset<BitSize>& value) {
+	void set_bits(bitset<SetSize>& set, int address, const bitset<BitSize>& value) {
 		for (int i = 0; i < BitSize; i++) {
 			set[address + i] = value[i];
 		}
 	}
-};
+}
