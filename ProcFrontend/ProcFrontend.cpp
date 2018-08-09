@@ -3,6 +3,7 @@
 
 #include "ComputerState.h"
 #include "RegisterSet.h"
+#include "Tests.h"
 
 const int BaseSize           = 4;
 const int InternalMemorySize = 32;
@@ -11,6 +12,12 @@ const int RamMemorySize      = 64;
 using namespace std;
 
 using Computer = ComputerState<BaseSize, InternalMemorySize, RamMemorySize>;
+
+void run_tests() {
+	cerr << "Run tests:" << endl;
+	Tests::test_all();
+	cerr << endl;
+}
 
 template<int Size>
 void print_memory(const bitset<Size>& mem, int bits_per_space, int bits_per_line) {
@@ -63,15 +70,37 @@ void print_state(const Computer& state) {
 	print_memory(state.RAM.get_all(), BaseSize, BaseSize * 4);
 }
 
-int main() {
-	auto ram_mem = bitset<RamMemorySize>(
-		0b0001);
+int main(int argc, char* argv[]) {
+	auto is_test_only_mode = false;
+	if (argc > 1) {
+		cout << "'" << argv[1] << "'" << endl;
+		string arg = argv[1];
+		is_test_only_mode = (arg == "test_only_mode");
+		cout << is_test_only_mode << endl;
+	}
+
+	cout << "=== CppProc ===" << endl;
+	if (is_test_only_mode) {
+		cout << "Test Only Mode" << endl;
+	}
+	cout << endl;
+
+	run_tests();
+
+	if (is_test_only_mode) {
+		return 0;
+	}
+
+	auto ram_mem = bitset<RamMemorySize>();
 	auto comp = Computer(ram_mem);
+
+	cout << "Start execution..." << endl;
+	cout << endl;
 
 	auto running = true;
 	while (running) {
 		print_state(comp);
-		running = comp.Tick();
+		running = comp.tick();
 		cout << endl;
 		cin.get();
 	}

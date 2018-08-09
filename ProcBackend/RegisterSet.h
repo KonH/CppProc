@@ -1,6 +1,10 @@
 #pragma once
 
+#include <bitset>
+
 #include "Reference.h"
+
+using namespace std;
 
 const int ServiceRegisters = 4;
 

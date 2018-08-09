@@ -14,7 +14,7 @@ public:
 
 	ComputerState(bitset<RamMemorySize> ram_memory):RAM(ram_memory) { }
 
-	bool Tick() {
-		return Runner.Tick(Registers, CPU, RAM);
+	bool tick() {
+		return Runner.tick(Registers, CPU, RAM);
 	}
 };

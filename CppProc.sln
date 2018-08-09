@@ -7,6 +7,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcFrontend", "ProcFronten
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcBackend", "ProcBackend\ProcBackend.vcxitems", "{44849872-9BC3-401D-A64A-72A367CF7125}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{830ACF29-9212-485E-AC50-A8E7F6CE6D6A}"
+	ProjectSection(SolutionItems) = preProject
+		run_tests.bat = run_tests.bat
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		ProcBackend\ProcBackend.vcxitems*{2ffcf62d-cf63-4557-9d62-06946fd355f3}*SharedItemsImports = 4

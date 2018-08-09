@@ -1,12 +1,16 @@
 #pragma once
 
-#include <functional>
 #include <map>
+#include <bitset>
+#include <functional>
+
+#include "RegisterSet.h"
+#include "MemoryState.h"
 
 template<int BS, int IMS, int RMS>
 class CpuRunner {
 public:
-	bool Tick(const RegisterSet<BS, IMS>& regs, MemoryState<IMS>& cpu, MemoryState<RMS>& ram) const {
+	bool tick(const RegisterSet<BS, IMS>& regs, MemoryState<IMS>& cpu, MemoryState<RMS>& ram) const {
 		if (cpu.get(regs.Terminated).test(0)) {
 			return false; // Terminated
 		}
