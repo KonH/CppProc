@@ -39,7 +39,7 @@ namespace View {
 		
 		print_register("Counter", cpu.get(regs.Counter));
 		print_register("IP", cpu.get(regs.IP));
-		print_register("AP", cpu.get(regs.AP));
+		print_register("AP", cpu.get(regs.AR));
 
 		auto cn = regs.get_CN_count();
 		for (int i = 0; i < cn; i++) {

@@ -37,13 +37,17 @@ namespace Logics {
 		}
 
 	private:
+		static void set_overflow(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, bool value) {
+			state.CPU.set<1>(regs.Overflow, BitUtils::get_set<1>(value));
+		}
+
 		template<int Size>
 		static bool add_to_register(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, Reference<Size> ref, bitset<Size> value) {
 			Utils::log_line("Runner.add_to_register(", ref.Address, ":", ref.Size, ", ", value, ")");
 			auto old_value = state.CPU.get(ref);
 			auto[new_value, overflow] = BitUtils::plus(old_value, value);
 			state.CPU.set(ref, new_value);
-			state.CPU.set<1>(regs.Overflow, BitUtils::get_set<1>(overflow));
+			set_overflow(regs, state, overflow);
 			return overflow;
 		}
 
@@ -105,8 +109,12 @@ namespace Logics {
 		}
 
 		map<unsigned long, CommandHandler> _commands = {
-			{ 0b0000, &CpuRunner::NOOP }, // NOOP _ _ - no operation, just bump IP & inc Counter
-			{ 0b0001, &CpuRunner::RST  }, // RST _ _ - set Terminated flag
+			{ 0b0000, &CpuRunner::NOOP }, // NOOP _ _ => no operation, just bump IP & inc Counter
+			{ 0b0001, &CpuRunner::RST  }, // RST  _ _ => set Terminated flag
+			{ 0b0010, &CpuRunner::CLR  }, // CLR  x _ => clear given common register (r[x])
+			{ 0b0011, &CpuRunner::INC  }, // INC  x _ => inc given common register
+			{ 0b0100, &CpuRunner::SUM  }, // SUM  x y => r[x] + r[y] will be saved to AC
+			{ 0b0101, &CpuRunner::MOV  }, // MOV  x y => move r[x] value to r[y]
 		};
 
 		static void NOOP(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
@@ -117,6 +125,31 @@ namespace Logics {
 		static void RST(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
 			Utils::log_line("Runner.RST");
 			state.CPU.set(regs.Terminated, bitset<1>(0b1));
+		}
+
+		static void CLR(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
+			Utils::log_line("Runner.CLR");
+			state.CPU.set(regs.get_CN(a), BitUtils::get_zero<BS>());
+		}
+
+		static void INC(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
+			Utils::log_line("Runner.INC");
+			inc_register<BS>(regs, state, regs.get_CN(a));
+		}
+
+		static void SUM(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
+			Utils::log_line("Runner.SUM");
+			auto a_value = state.CPU.get<BS>(regs.get_CN(a));
+			auto b_value = state.CPU.get<BS>(regs.get_CN(b));
+			auto[result, overflow] = BitUtils::plus(a_value, b_value);
+			set_overflow(regs, state, overflow);
+			state.CPU.set(regs.AR, result);
+		}
+
+		static void MOV(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
+			Utils::log_line("Runner.MOV");
+			auto a_value = state.CPU.get<BS>(regs.get_CN(a));
+			state.CPU.set(regs.get_CN(b), a_value);
 		}
 	};
 }

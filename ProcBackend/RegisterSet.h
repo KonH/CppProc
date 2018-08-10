@@ -45,7 +45,7 @@ namespace Architecture {
 		// 13
 		// 14
 		// 15
-		Reference<BS> AP = { get_address_at(3) };
+		Reference<BS> AR = { get_address_at(3) };
 
 		// 16 CR1 (Common register #1)
 		// 17

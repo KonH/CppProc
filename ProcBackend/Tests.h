@@ -137,6 +137,53 @@ namespace Tests {
 		assert_equal(cmp.State.RAM.get(cmp.Registers.Terminated), 0b1, "flag is set");
 	}
 
+	void command_CLR() {
+		auto cmp = Computer<4, 16 + 4, 12>(0b0000'0010);
+		auto c0 = cmp.Registers.get_CN(0);
+		cmp.State.CPU.set(c0, BitUtils::get_one<4>());
+		auto before = cmp.State.CPU.get(c0);
+		assert_equal(before, BitUtils::get_one<4>());
+		cmp.tick();
+		auto after = cmp.State.CPU.get(c0);
+		assert_equal(after, BitUtils::get_zero<4>());
+	}
+
+	void command_INC() {
+		auto cmp = Computer<4, 16 + 4, 12>(0b0000'0011);
+		auto c0 = cmp.Registers.get_CN(0);
+		cmp.State.CPU.set(c0, BitUtils::get_zero<4>());
+		auto before = cmp.State.CPU.get(c0);
+		assert_equal(before, BitUtils::get_zero<4>());
+		cmp.tick();
+		auto after = cmp.State.CPU.get(c0);
+		assert_equal(after, BitUtils::get_one<4>());
+	}
+
+	void command_SUM() {
+		auto cmp = Computer<4, 16 + 4 * 2, 12>(0b0001'0000'0100);
+		auto c0 = cmp.Registers.get_CN(0);
+		auto c1 = cmp.Registers.get_CN(1);
+		cmp.State.CPU.set(c0, BitUtils::get_one<4>());
+		cmp.State.CPU.set(c1, BitUtils::get_set<4>(2));
+		auto ar_before = cmp.State.CPU.get(cmp.Registers.AR);
+		assert_equal(ar_before, BitUtils::get_zero<4>());
+		cmp.tick();
+		auto ar_after = cmp.State.CPU.get(cmp.Registers.AR);
+		assert_equal(ar_after, BitUtils::get_set<4>(3));
+	}
+
+	void command_MOV() {
+		auto cmp = Computer<4, 16 + 4 * 2, 12>(0b0001'0000'0101);
+		auto c0 = cmp.Registers.get_CN(0);
+		auto c1 = cmp.Registers.get_CN(1);
+		cmp.State.CPU.set(c0, BitUtils::get_one<4>());
+		auto c1_before = cmp.State.CPU.get(c1);
+		assert_equal(c1_before, BitUtils::get_zero<4>());
+		cmp.tick();
+		auto c1_after = cmp.State.CPU.get(c1);
+		assert_equal(c1_after, BitUtils::get_one<4>());
+	}
+
 	void test_utils() {
 		TestRunner tr("utils");
 		tr.run_test(bit_zero, "bit_zero");
@@ -157,6 +204,10 @@ namespace Tests {
 		tr.run_test(command_unknown, "command_unknown");
 		tr.run_test(command_NOOP, "NOOP");
 		tr.run_test(command_RST, "RST");
+		tr.run_test(command_CLR, "CLR");
+		tr.run_test(command_INC, "INC");
+		tr.run_test(command_SUM, "SUM");
+		tr.run_test(command_MOV, "MOV");
 	}
 
 	void test_all() {
