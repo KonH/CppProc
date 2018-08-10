@@ -110,6 +110,13 @@ namespace Tests {
 		assert_equal(after, BitUtils::get_zero<1>());
 	}
 
+	void command_unknown() {
+		auto cmp = Computer<4, 16, 12>(0b1111);
+		cmp.tick();
+		auto fatal = cmp.State.CPU.get(cmp.Registers.Fatal);
+		assert_equal(fatal, 0b1);
+	}
+
 	void command_NOOP() {
 		auto cmp = Computer<4, 16, 12>(0b0000);
 		cmp.tick();
@@ -147,6 +154,7 @@ namespace Tests {
 
 	void test_commands() {
 		TestRunner tr("commands");
+		tr.run_test(command_unknown, "command_unknown");
 		tr.run_test(command_NOOP, "NOOP");
 		tr.run_test(command_RST, "RST");
 	}

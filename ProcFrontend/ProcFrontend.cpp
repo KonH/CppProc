@@ -34,6 +34,7 @@ int main(int argc, char* argv[]) {
 	cout << "=== CppProc ===" << endl;
 	if (is_test_only_mode) {
 		cout << "Test Only Mode" << endl;
+		Utils::enable_log();
 	}
 	cout << endl;
 
@@ -51,13 +52,20 @@ int main(int argc, char* argv[]) {
 
 	auto running = true;
 	while (running) {
+		cout << "State:" << endl;
 		View::print_state(comp);
-		running = comp.tick();
+		
 		cout << endl;
+		cout << "Operations:" << endl;
+		Utils::enable_log();
+		running = comp.tick();
+		Utils::disable_log();
+		cout << endl;
+
+		if (!running) {
+			cout << endl << "Execution done." << endl;
+		}
 		cin.get();
 	}
-
-	cout << endl << "Execution done." << endl;
-	cin.get();
 	return 0;
 }
