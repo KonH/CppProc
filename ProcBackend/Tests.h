@@ -123,7 +123,7 @@ namespace Tests {
 		auto counter = cmp.State.CPU.get(cmp.Registers.Counter);
 		assert_equal(counter, 0b1);
 		auto ip = cmp.State.CPU.get(cmp.Registers.IP);
-		assert_equal(ip, 4 * 3);
+		assert_equal(ip, 4);
 		auto overflow = cmp.State.CPU.get(cmp.Registers.Overflow);
 		assert_equal(overflow, 0b0);
 	}

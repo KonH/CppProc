@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <tuple>
 #include <bitset>
 #include <functional>
 
@@ -11,9 +12,11 @@
 #include "ComputerState.h"
 
 using std::map;
+using std::tuple;
 using std::bitset;
 using std::function;
 
+using State::MemoryState;
 using State::ComputerState;
 using Architecture::RegisterSet;
 
@@ -21,91 +24,103 @@ namespace Logics {
 	template<int BS, int IMS, int RMS>
 	class CpuRunner {
 	public:
-		bool tick(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state) const {
-			auto& cpu = state.CPU;
-			auto& ram = state.RAM;
-			if (cpu.get(regs.Terminated).test(0)) {
+		CpuRunner(const RegisterSet<BS, IMS>& regs, MemoryState<IMS>& cpu, MemoryState<RMS>& ram):_regs(regs), _cpu(cpu), _ram(ram) {}
+
+		bool tick() {
+			if (_cpu.get(_regs.Terminated).test(0)) {
 				Utils::log_line("Runner.tick: terminated.");
 				return false;
 			}
 			Utils::log_line("Runner.tick: continue execution.");
-			auto ip = cpu.get(regs.IP);
-			Reference<BS * 3> command(ip.to_ulong()); // Command code + 2 args
-			auto command_body = ram.get(command);
-			perform_command(regs, state, command_body);
+			auto ip = _cpu.get(_regs.IP);
+			Reference<BS> command(ip.to_ulong());
+			auto command_code = _ram.get(command);
+			perform_command(command_code);
 			return true;
 		}
 
 	private:
-		static void set_overflow(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, bool value) {
-			state.CPU.set<1>(regs.Overflow, BitUtils::get_set<1>(value));
+		const RegisterSet<BS, IMS>& _regs;
+		MemoryState<IMS>&           _cpu;
+		MemoryState<RMS>&           _ram;
+
+		void set_overflow(bool value) {
+			Utils::log_line("Runner.set_overflow(", value, ")");
+			_cpu.set<1>(_regs.Overflow, BitUtils::get_set<1>(value));
 		}
 
 		template<int Size>
-		static bool add_to_register(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, Reference<Size> ref, bitset<Size> value) {
+		bool add_to_register(Reference<Size> ref, bitset<Size> value) {
 			Utils::log_line("Runner.add_to_register(", ref.Address, ":", ref.Size, ", ", value, ")");
-			auto old_value = state.CPU.get(ref);
+			auto old_value = _cpu.get(ref);
 			auto[new_value, overflow] = BitUtils::plus(old_value, value);
-			state.CPU.set(ref, new_value);
-			set_overflow(regs, state, overflow);
+			_cpu.set(ref, new_value);
+			set_overflow(overflow);
 			return overflow;
 		}
 
 		template<int Size>
-		static bool inc_register(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, Reference<Size> ref) {
+		bool inc_register(Reference<Size> ref) {
 			Utils::log_line("Runner.inc_register(", ref.Address, ":", ref.Size, ")");
-			return add_to_register(regs, state, ref, BitUtils::get_one<Size>());
+			return add_to_register(ref, BitUtils::get_one<Size>());
 		}
 
-		static void raise_fatal(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state) {
+		void raise_fatal() {
 			Utils::log_line("Runner.raise_fatal");
-			state.CPU.set<1>(regs.Fatal, 0b1);
-			state.CPU.set<1>(regs.Terminated, 0b1);
+			_cpu.set<1>(_regs.Fatal, 0b1);
+			_cpu.set<1>(_regs.Terminated, 0b1);
 		}
 
-		static void inc_counter(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state) {
+		void inc_counter() {
 			Utils::log_line("Runner.inc_counter");
-			auto overflow = inc_register(regs, state, regs.Counter);
+			auto overflow = inc_register(_regs.Counter);
 			if (overflow) {
-				raise_fatal(regs, state);
+				raise_fatal();
 			}
 		}
 
-		static void bump_ip(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state) {
-			Utils::log_line("Runner.bump_ip");
-			auto overflow = add_to_register<BS>(regs, state, regs.IP, BitUtils::get_set<BS>(BS * 3));
+		void bump_ip(int size) {
+			Utils::log_line("Runner.bump_ip(", size, ")");
+			auto overflow = add_to_register<BS>(_regs.IP, BitUtils::get_set<BS>(BS * size));
 			if (overflow) {
-				raise_fatal(regs, state);
+				raise_fatal();
 			}
 		}
 
-		static void set_next_operation(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state) {
-			Utils::log_line("Runner.set_next_operation");
-			inc_counter(regs, state);
-			bump_ip(regs, state);
+		void set_next_operation(int size) {
+			Utils::log_line("Runner.set_next_operation(", size, ")");
+			inc_counter();
+			bump_ip(size);
 		}
 
 		using CommandHandler =
-			function<void(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>&, const bitset<BS>&)>;
+			function<void(CpuRunner*)>;
 
-		void perform_command(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS * 3>& command) const {
-			Utils::log_line("Runner.perform_command(", command, ")");
-			
-			auto code = BitUtils::get_bits<BS, BS * 3>(command, 0);
-			auto arg1 = BitUtils::get_bits<BS, BS * 3>(command, BS);
-			auto arg2 = BitUtils::get_bits<BS, BS * 3>(command, BS * 2);
+		void perform_command(const bitset<BS>& command_code) {
+			Utils::log_line("Runner.perform_command(", command_code, ")");
 
-			Utils::log_line("Runner.perform_command(", code, ", ", arg1, ", ", arg2, ")");
-
-			auto code_value = code.to_ulong();
+			auto code_value = command_code.to_ulong();
 			auto cmd_iter = _commands.find(code_value);
 			if (cmd_iter != _commands.end()) {
 				CommandHandler cmd = _commands.at(code_value);
-				cmd(regs, state, arg1, arg2);
+				cmd(this);
 			} else {
 				Utils::log_line("Runner.perform_command: unknown command!");
-				raise_fatal(regs, state);
+				raise_fatal();
 			}
+		}
+
+		bitset<BS> read_arg_N(int index) {
+			auto address = _cpu.get(_regs.IP).to_ulong() + BS * (index + 1);
+			return _ram.get(Reference<BS>(address));
+		}
+
+		bitset<BS> read_arg_0() {
+			return read_arg_N(0);
+		}
+
+		tuple<bitset<BS>, bitset<BS>> read_args() {
+			return std::make_tuple(read_arg_N(0), read_arg_N(1));
 		}
 
 		map<unsigned long, CommandHandler> _commands = {
@@ -117,39 +132,47 @@ namespace Logics {
 			{ 0b0101, &CpuRunner::MOV  }, // MOV  x y => move r[x] value to r[y]
 		};
 
-		static void NOOP(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
+		void NOOP() {
 			Utils::log_line("Runner.NOOP");
-			set_next_operation(regs, state);
+			set_next_operation(1);
 		}
 
-		static void RST(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
+		void RST() {
 			Utils::log_line("Runner.RST");
-			state.CPU.set(regs.Terminated, bitset<1>(0b1));
+			_cpu.set(_regs.Terminated, bitset<1>(0b1));
 		}
 
-		static void CLR(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
+		void CLR() {
 			Utils::log_line("Runner.CLR");
-			state.CPU.set(regs.get_CN(a), BitUtils::get_zero<BS>());
+			auto a = read_arg_0();
+			_cpu.set(_regs.get_CN(a), BitUtils::get_zero<BS>());
+			set_next_operation(2);
 		}
 
-		static void INC(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
+		void INC() {
 			Utils::log_line("Runner.INC");
-			inc_register<BS>(regs, state, regs.get_CN(a));
+			auto a = read_arg_0();
+			inc_register<BS>(_regs.get_CN(a));
+			set_next_operation(2);
 		}
 
-		static void SUM(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
+		void SUM() {
 			Utils::log_line("Runner.SUM");
-			auto a_value = state.CPU.get<BS>(regs.get_CN(a));
-			auto b_value = state.CPU.get<BS>(regs.get_CN(b));
+			auto [a, b] = read_args();
+			auto a_value = _cpu.get<BS>(_regs.get_CN(a));
+			auto b_value = _cpu.get<BS>(_regs.get_CN(b));
 			auto[result, overflow] = BitUtils::plus(a_value, b_value);
-			set_overflow(regs, state, overflow);
-			state.CPU.set(regs.AR, result);
+			set_overflow(overflow);
+			_cpu.set(_regs.AR, result);
+			set_next_operation(3);
 		}
 
-		static void MOV(const RegisterSet<BS, IMS>& regs, ComputerState<BS, IMS, RMS>& state, const bitset<BS>& a, const bitset<BS>& b) {
+		void MOV() {
 			Utils::log_line("Runner.MOV");
-			auto a_value = state.CPU.get<BS>(regs.get_CN(a));
-			state.CPU.set(regs.get_CN(b), a_value);
+			auto[a, b] = read_args();
+			auto a_value = _cpu.get<BS>(_regs.get_CN(a));
+			_cpu.set(_regs.get_CN(b), a_value);
+			set_next_operation(3);
 		}
 	};
 }

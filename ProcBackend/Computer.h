@@ -17,12 +17,14 @@ namespace Core {
 	public:
 		RegisterSet  <BaseSize, InternalMemorySize>                Registers;
 		ComputerState<BaseSize, InternalMemorySize, RamMemorySize> State;
-		CpuRunner    <BaseSize, InternalMemorySize, RamMemorySize> Runner;
 
 		Computer(bitset<RamMemorySize> init_ram):State(init_ram) { }
 
 		bool tick() {
-			return Runner.tick(Registers, State);
+			auto& cpu = State.CPU;
+			auto& ram = State.RAM;
+			auto runner = CpuRunner<BaseSize, InternalMemorySize, RamMemorySize>(Registers, cpu, ram);
+			return runner.tick();
 		}
 	};
 }
