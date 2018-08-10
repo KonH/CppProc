@@ -100,13 +100,25 @@ namespace Tests {
 		assert_equal(cmp.State.RAM.get_all(), ram);
 	}
 
+	void state_overflow_always_saved() {
+		auto cmp = Computer<4, 16, 12>(0b0000); // NOOP
+		cmp.State.CPU.set(cmp.Registers.Overflow, BitUtils::get_one<1>());
+		auto before = cmp.State.CPU.get(cmp.Registers.Overflow);
+		assert_equal(before, BitUtils::get_one<1>());
+		cmp.tick();
+		auto after = cmp.State.CPU.get(cmp.Registers.Overflow);
+		assert_equal(after, BitUtils::get_zero<1>());
+	}
+
 	void command_NOOP() {
-		auto cmp = Computer<4, 16, 12>(0b0001);
+		auto cmp = Computer<4, 16, 12>(0b0000);
 		cmp.tick();
 		auto counter = cmp.State.CPU.get(cmp.Registers.Counter);
 		assert_equal(counter, 0b1);
-		auto ip = cmp.State.CPU.get(cmp.Registers.Counter);
-		assert_equal(counter, 4 * 3);
+		auto ip = cmp.State.CPU.get(cmp.Registers.IP);
+		assert_equal(ip, 4 * 3);
+		auto overflow = cmp.State.CPU.get(cmp.Registers.Overflow);
+		assert_equal(overflow, 0b0);
 	}
 
 	void command_RST() {
@@ -130,10 +142,12 @@ namespace Tests {
 	void test_state() {
 		TestRunner tr("state");
 		tr.run_test(state_init, "init");
+		tr.run_test(state_overflow_always_saved, "state_overflow_always_saved");
 	}
 
 	void test_commands() {
 		TestRunner tr("commands");
+		tr.run_test(command_NOOP, "NOOP");
 		tr.run_test(command_RST, "RST");
 	}
 

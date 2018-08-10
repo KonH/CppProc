@@ -32,10 +32,10 @@ namespace View {
 	template<int BS, int IMS, int RMS>
 	void print_registers(const RegisterSet<BS, IMS>& regs, const ComputerState<BS, IMS, RMS>& state) {
 		auto& cpu = state.CPU;
-		cout << "Flags: " << cpu.get(regs.Flags) << endl;
-		cout << "(terminated: " << cpu.get(regs.Terminated) << ")" << endl;
-		cout << "(overflow: " << cpu.get(regs.Overflow) << ")" << endl;
-		cout << "(fatal: " << cpu.get(regs.Fatal) << ")" << endl;
+		cout << "Flags: " << cpu.get(regs.Flags);
+		cout << " (terminated: " << cpu.get(regs.Terminated);
+		cout << ", overflow: " << cpu.get(regs.Overflow);
+		cout << ", fatal: " << cpu.get(regs.Fatal) << ")" << endl;
 		
 		print_register("Counter", cpu.get(regs.Counter));
 		print_register("IP", cpu.get(regs.IP));

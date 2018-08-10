@@ -24,10 +24,10 @@ namespace Architecture {
 		// 01       1 Integer Overflow (last operation raised overflow)
 		// 02       2 Fatal Error      (IP or Counter is out of range)
 		// 03       3 -
-		Reference<BS> Flags      = { get_address_at(0) };
-		Reference<1>  Terminated = { get_address_at(0) };
-		Reference<1>  Overflow   = { get_address_at(1) };
-		Reference<1>  Fatal      = { get_address_at(2) };
+		Reference<BS> Flags      = { get_address_at(0)     };
+		Reference<1>  Terminated = { get_address_at(0) + 0 };
+		Reference<1>  Overflow   = { get_address_at(0) + 1 };
+		Reference<1>  Fatal      = { get_address_at(0) + 2 };
 
 		// 04 Counter (how many ticks was made)
 		// 05

@@ -31,7 +31,6 @@ namespace Logics {
 			auto command_body = ram.get(command);
 			perform_command(regs, state, command_body);
 			// todo: check invalid references
-			// todo: fix strange overflow
 			return true; // Continue execution
 		}
 
@@ -41,9 +40,7 @@ namespace Logics {
 			auto old_value = state.CPU.get(ref);
 			auto[new_value, overflow] = BitUtils::plus(old_value, value);
 			state.CPU.set(ref, new_value);
-			if (overflow) {
-				state.CPU.set<1>(regs.Overflow, 0b1);
-			}
+			state.CPU.set<1>(regs.Overflow, BitUtils::get_set<1>(overflow));
 			return overflow;
 		}
 
