@@ -100,18 +100,26 @@ namespace TestUtils {
 		TestRunner(const string& prefix = "") :
 			_prefix(prefix) {}
 
+		void write_name(const string& name) {
+			if (!_prefix.empty()) {
+				cerr << _prefix << ".";
+			}
+			cerr << name;
+		}
+
 		template<class TestFunc>
-		void run_test(TestFunc func, const string& testName) {
+		void run_test(TestFunc func, const string& name) {
 			try {
+				write_name(name);
+				cerr << endl;
 				func();
-				if (!_prefix.empty()) {
-					cerr << _prefix << ".";
-				}
-				cerr << testName << " OK" << endl;
+				write_name(name);
+				cerr << " OK" << endl << endl;
 			}
 			catch (runtime_error& e) {
 				++_fail_count;
-				cerr << testName << " fail: " << e.what() << endl;
+				write_name(name);
+				cerr << " fail: " << e.what() << endl << endl;
 			}
 		}
 

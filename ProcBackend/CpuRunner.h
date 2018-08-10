@@ -139,6 +139,7 @@ namespace Logics {
 
 		void RST() {
 			Utils::log_line("Runner.RST");
+			inc_counter();
 			_cpu.set(_regs.Terminated, bitset<1>(0b1));
 		}
 

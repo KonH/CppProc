@@ -16,6 +16,14 @@ using TestUtils::assert;
 using TestUtils::assert_equal;
 
 namespace Tests {
+	void bit_order() {
+		// rank:  7 6 5 4  3 2 1 0
+		// value: 1 0 0 0  0 0 0 1
+		bitset<8> set(0b1000'0001);
+		assert_equal(BitUtils::get_bits<4>(set, 0), bitset<4>(0b0001));
+		assert_equal(BitUtils::get_bits<4>(set, 4), bitset<4>(0b1000));
+	}
+
 	void bit_plus_ordinary() {
 		bitset<1> x;
 		bitset<1> y;
@@ -111,14 +119,14 @@ namespace Tests {
 	}
 
 	void command_unknown() {
-		auto cmp = Computer<4, 16, 12>(0b1111);
+		auto cmp = Computer<4, 16, 12>(0b0000'0000'1111);
 		cmp.tick();
 		auto fatal = cmp.State.CPU.get(cmp.Registers.Fatal);
 		assert_equal(fatal, 0b1);
 	}
 
 	void command_NOOP() {
-		auto cmp = Computer<4, 16, 12>(0b0000);
+		auto cmp = Computer<4, 16, 12>(0b0000'0000'0000);
 		cmp.tick();
 		auto counter = cmp.State.CPU.get(cmp.Registers.Counter);
 		assert_equal(counter, 0b1);
@@ -129,16 +137,16 @@ namespace Tests {
 	}
 
 	void command_RST() {
-		auto cmp = Computer<4, 16, 12>(0b0001);
+		auto cmp = Computer<4, 16, 12>(0b0000'0000'0001);
 		auto t1_performing = cmp.tick();
 		assert(t1_performing, "performing");
 		auto t2_terminated = !cmp.tick();
 		assert(t2_terminated, "terminated");
-		assert_equal(cmp.State.RAM.get(cmp.Registers.Terminated), 0b1, "flag is set");
+		assert_equal(cmp.State.CPU.get(cmp.Registers.Terminated), 0b1, "flag is set");
 	}
 
 	void command_CLR() {
-		auto cmp = Computer<4, 16 + 4, 12>(0b0000'0010);
+		auto cmp = Computer<4, 16 + 4, 12>(0b0000'0000'0010);
 		auto c0 = cmp.Registers.get_CN(0);
 		cmp.State.CPU.set(c0, BitUtils::get_one<4>());
 		auto before = cmp.State.CPU.get(c0);
@@ -149,7 +157,7 @@ namespace Tests {
 	}
 
 	void command_INC() {
-		auto cmp = Computer<4, 16 + 4, 12>(0b0000'0011);
+		auto cmp = Computer<4, 16 + 4, 12>(0b0000'0000'0011);
 		auto c0 = cmp.Registers.get_CN(0);
 		cmp.State.CPU.set(c0, BitUtils::get_zero<4>());
 		auto before = cmp.State.CPU.get(c0);
@@ -186,6 +194,7 @@ namespace Tests {
 
 	void test_utils() {
 		TestRunner tr("utils");
+		tr.run_test(bit_order, "bit_order");
 		tr.run_test(bit_zero, "bit_zero");
 		tr.run_test(bit_one, "bit_one");
 		tr.run_test(bit_plus_ordinary, "bit_plus_ordinary");

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bitset>
+#include <iomanip>
 
 #include "Computer.h"
 #include "ComputerState.h"
@@ -15,7 +16,8 @@ namespace View {
 	void print_memory(const bitset<TotalSize>& mem, int sizes_per_line) {
 		int sizes = 0;
 		for (int i = 0; i < TotalSize; i += BaseSize) {
-			cout << BitUtils::get_bits<BaseSize>(mem, i) << ' ';
+			auto bits = BitUtils::get_bits<BaseSize>(mem, i);
+			cout << bits << " (" << std::setfill('0') << std::setw(2) << bits.to_ulong() << ")" << " ";
 			sizes++;
 			if (sizes >= sizes_per_line) {
 				sizes = 0;
@@ -26,18 +28,18 @@ namespace View {
 
 	template<int Size>
 	void print_register(const string& name, const bitset<Size>& reg) {
-		cout << name << ": " << reg << " (" << reg.to_ulong() << ")" << endl;
+		cout << name << ": " << reg << " (" << std::setfill('0') << std::setw(2) << reg.to_ulong() << ")" << endl;
 	}
 
 	template<int BS, int IMS, int RMS>
 	void print_registers(const RegisterSet<BS, IMS>& regs, const ComputerState<BS, IMS, RMS>& state) {
 		auto& cpu = state.CPU;
-		cout << "Flags: " << cpu.get(regs.Flags);
+		cout << "Fs: " << cpu.get(regs.Flags);
 		cout << " (terminated: " << cpu.get(regs.Terminated);
 		cout << ", overflow: " << cpu.get(regs.Overflow);
 		cout << ", fatal: " << cpu.get(regs.Fatal) << ")" << endl;
 		
-		print_register("Counter", cpu.get(regs.Counter));
+		print_register("Cr", cpu.get(regs.Counter));
 		print_register("IP", cpu.get(regs.IP));
 		print_register("AP", cpu.get(regs.AR));
 

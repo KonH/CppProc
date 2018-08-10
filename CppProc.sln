@@ -9,6 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcBackend", "ProcBackend\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{830ACF29-9212-485E-AC50-A8E7F6CE6D6A}"
 	ProjectSection(SolutionItems) = preProject
+		raw_mem.txt = raw_mem.txt
 		run_tests.bat = run_tests.bat
 	EndProjectSection
 EndProject
