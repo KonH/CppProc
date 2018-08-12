@@ -6,11 +6,6 @@
 using std::bitset;
 
 namespace BitUtils {
-	template<int Address, int BitSize, int SetSize>
-	bitset<BitSize> get_bits(const bitset<SetSize>& set) {
-		static_assert(Address + BitSize <= SetSize);
-		return get_bits(set, Address);
-	}
 
 	template<int BitSize, int SetSize>
 	bitset<BitSize> get_bits(const bitset<SetSize>& set, int address) {

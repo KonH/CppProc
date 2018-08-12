@@ -22,17 +22,10 @@ namespace State {
 			return _memory;
 		}
 
-		template<int Address, int BitSize>
-		bitset<BitSize> get() const {
-			auto result = BitUtils::get_bits<Address, BitSize, MS>(_memory);
-			Utils::log_line(_name, ": R < ", Address, ":", BitSize, " = ", result, " str: ");
-			return result;
-		}
-
 		template<int BitSize>
-		bitset<BitSize> get(Reference<BitSize> reg) const {
-			auto result = BitUtils::get_bits<BitSize, MS>(_memory, reg.Address);
-			Utils::log_line(_name, ": R < ", reg.Address, ":", BitSize, " = ", result);
+		bitset<BitSize> get(Reference<BitSize> ref) const {
+			auto result = BitUtils::get_bits<BitSize, MS>(_memory, ref.Address);
+			Utils::log_line(_name, ": R < ", ref.Address, ":", BitSize, " = ", result);
 			return result;
 		}
 
@@ -43,9 +36,9 @@ namespace State {
 		}
 
 		template<int BitSize>
-		void set(Reference<BitSize> reg, bitset<BitSize> value) {
-			BitUtils::set_bits<BitSize, MS>(_memory, reg.Address, value);
-			Utils::log_line(_name, ": W > ", reg.Address, ":", BitSize, " = ", value);
+		void set(Reference<BitSize> ref, bitset<BitSize> value) {
+			BitUtils::set_bits<BitSize, MS>(_memory, ref.Address, value);
+			Utils::log_line(_name, ": W > ", ref.Address, ":", BitSize, " = ", value);
 		}
 
 

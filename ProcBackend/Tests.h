@@ -5,12 +5,14 @@
 
 #include "BitUtils.h"
 #include "Computer.h"
+#include "Reference.h"
 #include "TestRunner.h"
 
 using std::tuple;
 using std::bitset;
 
 using Core::Computer;
+using Core::Reference;
 using TestUtils::TestRunner;
 using TestUtils::assert;
 using TestUtils::assert_equal;
@@ -118,6 +120,29 @@ namespace Tests {
 		assert_equal(after, BitUtils::get_zero<1>());
 	}
 
+	void state_ram_readed() {
+		auto ram = bitset<4>(0b1111);
+		auto cmp = Computer<4, 32, 4>(ram);
+		auto before = cmp.State.DataBus.get(Reference<4>(0));
+		assert_equal(before, BitUtils::get_zero<4>());
+		cmp.State.ControlBus.set(Reference<2>(0), bitset<2>(0b01));
+		cmp.tick();
+		auto after = cmp.State.DataBus.get(Reference<4>(0));
+		assert_equal(after, ram);
+	}
+
+	void state_ram_writed() {
+		auto cmp = Computer<4, 32, 4>(0b0000);
+		auto data = bitset<4>(0b1111);
+		auto before = cmp.State.RAM.get(Reference<4>(0));
+		assert_equal(before, BitUtils::get_zero<4>());
+		cmp.State.ControlBus.set(Reference<2>(0), bitset<2>(0b11));
+		cmp.State.DataBus.set(Reference<4>(0), data);
+		cmp.tick();
+		auto after = cmp.State.RAM.get(Reference<4>(0));
+		assert_equal(after, data);
+	}
+
 	void command_unknown() {
 		auto cmp = Computer<4, 32, 4>(0b1111);
 		cmp.tick();
@@ -206,6 +231,8 @@ namespace Tests {
 		TestRunner tr("state");
 		tr.run_test(state_init, "init");
 		tr.run_test(state_overflow_always_saved, "state_overflow_always_saved");
+		tr.run_test(state_ram_readed, "state_ram_readed");
+		tr.run_test(state_ram_writed, "state_ram_writed");
 	}
 
 	void test_commands() {

@@ -9,7 +9,6 @@
 #include "RegisterSet.h"
 #include "MemoryState.h"
 #include "RegisterSet.h"
-#include "ComputerState.h"
 
 using std::map;
 using std::tuple;
@@ -17,7 +16,6 @@ using std::bitset;
 using std::function;
 
 using State::MemoryState;
-using State::ComputerState;
 using Architecture::RegisterSet;
 
 namespace Logics {
@@ -28,10 +26,10 @@ namespace Logics {
 
 		bool tick() {
 			if (_cpu.get(_regs.Terminated).test(0)) {
-				Utils::log_line("Runner.tick: terminated.");
+				Utils::log_line("CpuRunner.tick: terminated.");
 				return false;
 			}
-			Utils::log_line("Runner.tick: continue execution.");
+			Utils::log_line("CpuRunner.tick: continue execution.");
 			auto ip = _cpu.get(_regs.IP);
 			Reference<BS> command(ip.to_ulong());
 			auto command_code = _ram.get(command);
@@ -45,13 +43,13 @@ namespace Logics {
 		MemoryState<RMS>&           _ram;
 
 		void set_overflow(bool value) {
-			Utils::log_line("Runner.set_overflow(", value, ")");
+			Utils::log_line("CpuRunner.set_overflow(", value, ")");
 			_cpu.set<1>(_regs.Overflow, BitUtils::get_set<1>(value));
 		}
 
 		template<int Size>
 		bool add_to_register(Reference<Size> ref, bitset<Size> value) {
-			Utils::log_line("Runner.add_to_register(", ref.Address, ":", ref.Size, ", ", value, ")");
+			Utils::log_line("CpuRunner.add_to_register(", ref.Address, ":", ref.Size, ", ", value, ")");
 			auto old_value = _cpu.get(ref);
 			auto[new_value, overflow] = BitUtils::plus(old_value, value);
 			_cpu.set(ref, new_value);
@@ -61,18 +59,18 @@ namespace Logics {
 
 		template<int Size>
 		bool inc_register(Reference<Size> ref) {
-			Utils::log_line("Runner.inc_register(", ref.Address, ":", ref.Size, ")");
+			Utils::log_line("CpuRunner.inc_register(", ref.Address, ":", ref.Size, ")");
 			return add_to_register(ref, BitUtils::get_one<Size>());
 		}
 
 		void raise_fatal() {
-			Utils::log_line("Runner.raise_fatal");
+			Utils::log_line("CpuRunner.raise_fatal");
 			_cpu.set<1>(_regs.Fatal, 0b1);
 			_cpu.set<1>(_regs.Terminated, 0b1);
 		}
 
 		void inc_counter() {
-			Utils::log_line("Runner.inc_counter");
+			Utils::log_line("CpuRunner.inc_counter");
 			auto overflow = inc_register(_regs.Counter);
 			if (overflow) {
 				raise_fatal();
@@ -80,7 +78,7 @@ namespace Logics {
 		}
 
 		void bump_ip(int size) {
-			Utils::log_line("Runner.bump_ip(", size, ")");
+			Utils::log_line("CpuRunner.bump_ip(", size, ")");
 			auto overflow = add_to_register<BS>(_regs.IP, BitUtils::get_set<BS>(BS * size));
 			if (overflow) {
 				raise_fatal();
@@ -88,7 +86,7 @@ namespace Logics {
 		}
 
 		void set_next_operation(int size) {
-			Utils::log_line("Runner.set_next_operation(", size, ")");
+			Utils::log_line("CpuRunner.set_next_operation(", size, ")");
 			inc_counter();
 			bump_ip(size);
 		}
@@ -97,7 +95,7 @@ namespace Logics {
 			function<void(CpuRunner*)>;
 
 		void perform_command(const bitset<BS>& command_code) {
-			Utils::log_line("Runner.perform_command(", command_code, ")");
+			Utils::log_line("CpuRunner.perform_command(", command_code, ")");
 
 			auto code_value = command_code.to_ulong();
 			auto cmd_iter = _commands.find(code_value);
@@ -105,7 +103,7 @@ namespace Logics {
 				CommandHandler cmd = _commands.at(code_value);
 				cmd(this);
 			} else {
-				Utils::log_line("Runner.perform_command: unknown command!");
+				Utils::log_line("CpuRunner.perform_command: unknown command!");
 				raise_fatal();
 			}
 		}
@@ -133,32 +131,32 @@ namespace Logics {
 		};
 
 		void NOOP() {
-			Utils::log_line("Runner.NOOP");
+			Utils::log_line("CpuRunner.NOOP");
 			set_next_operation(1);
 		}
 
 		void RST() {
-			Utils::log_line("Runner.RST");
+			Utils::log_line("CpuRunner.RST");
 			inc_counter();
 			_cpu.set(_regs.Terminated, bitset<1>(0b1));
 		}
 
 		void CLR() {
-			Utils::log_line("Runner.CLR");
+			Utils::log_line("CpuRunner.CLR");
 			auto a = read_arg_0();
 			_cpu.set(_regs.get_CN(a), BitUtils::get_zero<BS>());
 			set_next_operation(2);
 		}
 
 		void INC() {
-			Utils::log_line("Runner.INC");
+			Utils::log_line("CpuRunner.INC");
 			auto a = read_arg_0();
 			inc_register<BS>(_regs.get_CN(a));
 			set_next_operation(2);
 		}
 
 		void SUM() {
-			Utils::log_line("Runner.SUM");
+			Utils::log_line("CpuRunner.SUM");
 			auto [a, b] = read_args();
 			auto a_value = _cpu.get<BS>(_regs.get_CN(a));
 			auto b_value = _cpu.get<BS>(_regs.get_CN(b));
@@ -169,7 +167,7 @@ namespace Logics {
 		}
 
 		void MOV() {
-			Utils::log_line("Runner.MOV");
+			Utils::log_line("CpuRunner.MOV");
 			auto[a, b] = read_args();
 			auto a_value = _cpu.get<BS>(_regs.get_CN(a));
 			_cpu.set(_regs.get_CN(b), a_value);
