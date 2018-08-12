@@ -10,7 +10,7 @@
 #include "View.h"
 
 const int BaseSize           = 4;
-const int InternalMemorySize = 32;
+const int InternalMemorySize = 40;
 const int RamMemorySize      = 64;
 
 using std::cin;

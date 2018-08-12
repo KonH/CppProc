@@ -104,12 +104,12 @@ namespace Tests {
 
 	void state_init() {
 		auto ram = bitset<4>(0b0101);
-		auto cmp = Computer<4, 16, 4>(ram);
+		auto cmp = Computer<4, 32, 4>(ram);
 		assert_equal(cmp.State.RAM.get_all(), ram);
 	}
 
 	void state_overflow_always_saved() {
-		auto cmp = Computer<4, 16, 12>(0b0000); // NOOP
+		auto cmp = Computer<4, 32, 4>(0b0000); // NOOP
 		cmp.State.CPU.set(cmp.Registers.Overflow, BitUtils::get_one<1>());
 		auto before = cmp.State.CPU.get(cmp.Registers.Overflow);
 		assert_equal(before, BitUtils::get_one<1>());
@@ -119,14 +119,14 @@ namespace Tests {
 	}
 
 	void command_unknown() {
-		auto cmp = Computer<4, 16, 12>(0b0000'0000'1111);
+		auto cmp = Computer<4, 32, 4>(0b1111);
 		cmp.tick();
 		auto fatal = cmp.State.CPU.get(cmp.Registers.Fatal);
 		assert_equal(fatal, 0b1);
 	}
 
 	void command_NOOP() {
-		auto cmp = Computer<4, 16, 12>(0b0000'0000'0000);
+		auto cmp = Computer<4, 32, 4>(0b0000);
 		cmp.tick();
 		auto counter = cmp.State.CPU.get(cmp.Registers.Counter);
 		assert_equal(counter, 0b1);
@@ -137,7 +137,7 @@ namespace Tests {
 	}
 
 	void command_RST() {
-		auto cmp = Computer<4, 16, 12>(0b0000'0000'0001);
+		auto cmp = Computer<4, 32, 8>(0b0000'0001);
 		auto t1_performing = cmp.tick();
 		assert(t1_performing, "performing");
 		auto t2_terminated = !cmp.tick();
@@ -146,7 +146,7 @@ namespace Tests {
 	}
 
 	void command_CLR() {
-		auto cmp = Computer<4, 16 + 4, 12>(0b0000'0000'0010);
+		auto cmp = Computer<4, 32 + 4, 8>(0b0000'0010);
 		auto c0 = cmp.Registers.get_CN(0);
 		cmp.State.CPU.set(c0, BitUtils::get_one<4>());
 		auto before = cmp.State.CPU.get(c0);
@@ -157,7 +157,7 @@ namespace Tests {
 	}
 
 	void command_INC() {
-		auto cmp = Computer<4, 16 + 4, 12>(0b0000'0000'0011);
+		auto cmp = Computer<4, 32 + 4, 8>(0b0000'0011);
 		auto c0 = cmp.Registers.get_CN(0);
 		cmp.State.CPU.set(c0, BitUtils::get_zero<4>());
 		auto before = cmp.State.CPU.get(c0);
@@ -168,7 +168,7 @@ namespace Tests {
 	}
 
 	void command_SUM() {
-		auto cmp = Computer<4, 16 + 4 * 2, 12>(0b0001'0000'0100);
+		auto cmp = Computer<4, 32 + 4 * 2, 12>(0b0001'0000'0100);
 		auto c0 = cmp.Registers.get_CN(0);
 		auto c1 = cmp.Registers.get_CN(1);
 		cmp.State.CPU.set(c0, BitUtils::get_one<4>());
@@ -181,7 +181,7 @@ namespace Tests {
 	}
 
 	void command_MOV() {
-		auto cmp = Computer<4, 16 + 4 * 2, 12>(0b0001'0000'0101);
+		auto cmp = Computer<4, 32 + 4 * 2, 12>(0b0001'0000'0101);
 		auto c0 = cmp.Registers.get_CN(0);
 		auto c1 = cmp.Registers.get_CN(1);
 		cmp.State.CPU.set(c0, BitUtils::get_one<4>());
