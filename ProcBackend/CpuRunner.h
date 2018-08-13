@@ -71,10 +71,7 @@ namespace Logics {
 
 		void inc_counter() {
 			Utils::log_line("CpuRunner.inc_counter");
-			auto overflow = inc_register(_regs.Counter);
-			if (overflow) {
-				raise_fatal();
-			}
+			inc_register(_regs.Counter);
 		}
 
 		void bump_ip(int size) {

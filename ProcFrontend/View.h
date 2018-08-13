@@ -34,6 +34,15 @@ namespace View {
 	template<int BS, int IMS, int RMS>
 	void print_registers(const RegisterSet<BS, IMS>& regs, const ComputerState<BS, IMS, RMS>& state) {
 		auto& cpu = state.CPU;
+		
+		cout << "Ss: " << cpu.get(regs.System);
+		cout << " (pipeline state: " << cpu.get(regs.PipelineState);
+		cout << ", argument mode: " << cpu.get(regs.ArgumentMode) << ")" << endl;
+
+		print_register("CC", cpu.get(regs.CommandCode));
+		print_register("A1", cpu.get(regs.Arg1));
+		print_register("A2", cpu.get(regs.Arg2));
+
 		cout << "Fs: " << cpu.get(regs.Flags);
 		cout << " (terminated: " << cpu.get(regs.Terminated);
 		cout << ", overflow: " << cpu.get(regs.Overflow);
@@ -51,13 +60,29 @@ namespace View {
 	}
 
 	template<int BS, int IMS, int RMS>
+	void print_buses(const ComputerState<BS, IMS, RMS>& state) {
+		auto& control = state.ControlBus;
+		auto& address = state.AddressBus;
+		auto& data    = state.DataBus;
+
+		print_register("CL", control.get_all());
+		print_register("AD", address.get_all());
+		print_register("DT", data.get_all());
+	}
+
+	template<int BS, int IMS, int RMS>
 	void print_state(const Computer<BS, IMS, RMS>& cmp) {
 		auto& state = cmp.State;
 		cout << "Registers:" << endl;
 		print_registers(cmp.Registers, state);
+		cout << endl;
+
+		cout << "Buses:" << endl;
+		print_buses(state);
 
 		cout << endl << "Internal Memory:" << endl;
 		print_memory<BS, IMS>(state.CPU.get_all(), 4);
+		cout << endl;
 
 		cout << endl << "RAM Memory:" << endl;
 		print_memory<BS, RMS>(state.RAM.get_all(), 4);

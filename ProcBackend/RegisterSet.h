@@ -56,7 +56,7 @@ namespace Architecture {
 		Reference<1>  Overflow   = { get_address_at(4) + 1 };
 		Reference<1>  Fatal      = { get_address_at(4) + 2 };
 
-		// 20 Counter (how many ticks was made)
+		// 20 Counter (how many commands was processed)
 		// 21
 		// 22
 		// 23
