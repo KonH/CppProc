@@ -19,6 +19,12 @@ namespace Logics {
 		bool tick() {
 			// 00 - [ 1 - enabled, 0 - disabled ]
 			// 01 - [ 0 - read,    1 - write    ]
+			Utils::log_line(
+				"RamRunner.tick(control: ",
+				_control_bus.get_all(),
+				", address: ", _address_bus.get_all(),
+				", data: ", _data_bus.get_all(), ")"
+			);
 			auto enabled = _control_bus.get(Reference<1>(0)).test(0);
 			Utils::log_line("RamRunner.tick: enabled(", enabled, ")");
 			if (enabled) {
