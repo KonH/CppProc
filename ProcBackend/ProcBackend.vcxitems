@@ -17,6 +17,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)BitUtils.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Computer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ComputerState.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)CpuCommands.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)CpuLogics.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)CpuRunner.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Logger.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MemoryState.h" />
