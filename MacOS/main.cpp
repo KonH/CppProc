@@ -1,3 +1,5 @@
+#include "../ProcFrontend2/EntryPoint.h"
+
 int main() {
-	return 0;
+	return Frontend::start();
 }

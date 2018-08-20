@@ -1,7 +1,7 @@
 #pragma once
 
-#include <iostream>
 #include <string>
+#include <iostream>
 
 using std::cout;
 using std::endl;

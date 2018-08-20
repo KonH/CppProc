@@ -7,7 +7,7 @@
 using std::bitset;
 
 namespace State {
-	template<int BS, int IMS, int RMS>
+	template<size_t BS, size_t IMS, size_t RMS>
 	class ComputerState {
 	public:
 		MemoryState<IMS> CPU        = { "CPU",     0 };
@@ -16,6 +16,6 @@ namespace State {
 		MemoryState<BS>  DataBus    = { "Data",    0 };
 		MemoryState<RMS> RAM;
 
-		ComputerState(bitset<RMS> ram_memory) :RAM("RAM", ram_memory) {}
+		ComputerState(bitset<RMS> ram_memory): RAM("RAM", ram_memory) {}
 	};
 }

@@ -9,11 +9,11 @@ using std::bitset;
 using Core::Reference;
 
 namespace Architecture {
-	const int ServiceRegisters = 8;
-
-	template<int BS, int IMS>
+	template<size_t BS, size_t IMS>
 	class RegisterSet {
 	public:
+		static constexpr int ServiceRegisters = 8;
+		
 		static_assert(BS >= 4);
 		static_assert(IMS >= (BS * ServiceRegisters));
 
@@ -86,20 +86,24 @@ namespace Architecture {
 
 		auto get_CN(bitset<BS> index) const {
 			auto index_val = index.to_ulong();
-			return get_register<BS>(ServiceRegisters + index_val);
+			return get_CN(index_val);
+		}
+		
+		auto get_CN(size_t index) const {
+			return get_register<BS>(ServiceRegisters + index);
 		}
 
-		constexpr int get_CN_count() const {
+		constexpr size_t get_CN_count() const {
 			return (IMS - ServiceRegisters * BS) / BS;
 		}
 
-		constexpr int get_address_at(int index) const {
+		constexpr size_t get_address_at(size_t index) const {
 			return index * BS;
 		}
 
-		template<int Size>
-		auto get_register(int index) const {
-			return Reference<Size>(get_address_at(index));
+		template<size_t SZ>
+		auto get_register(size_t index) const {
+			return Reference<SZ>(get_address_at(index));
 		}
 	};
 }

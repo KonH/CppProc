@@ -25,6 +25,8 @@
 /* Begin PBXFileReference section */
 		7CC69AD22121DCBC00201EEC /* CppProc */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CppProc; sourceTree = BUILT_PRODUCTS_DIR; };
 		7CC69AD52121DCBC00201EEC /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		7CE065D5212B1E60006F585E /* ProcBackend2 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ProcBackend2; sourceTree = "<group>"; };
+		7CE065D6212B2B2F006F585E /* ProcFrontend2 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ProcFrontend2; sourceTree = "<group>"; };
 		7CF945DB2121DD2100A6F086 /* ProcBackend */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ProcBackend; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -42,6 +44,8 @@
 		7CC69AC92121DCBC00201EEC = {
 			isa = PBXGroup;
 			children = (
+				7CE065D6212B2B2F006F585E /* ProcFrontend2 */,
+				7CE065D5212B1E60006F585E /* ProcBackend2 */,
 				7CF945DB2121DD2100A6F086 /* ProcBackend */,
 				7CC69AD42121DCBC00201EEC /* MacOS */,
 				7CC69AD32121DCBC00201EEC /* Products */,
