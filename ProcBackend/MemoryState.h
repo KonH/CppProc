@@ -1,7 +1,7 @@
 #pragma once
 
 #include <bitset>
-#include <string_view>
+#include <string>
 
 #include "Logger.h"
 #include "BitUtils.h"
@@ -17,7 +17,7 @@ namespace State {
 	class MemoryState {
 		static_assert(MS > 0);
 	public:
-		MemoryState(const string_view& name, bitset<MS> init_memory = { 0 }) :_name(name), _memory(init_memory) {}
+		MemoryState(string name, bitset<MS> init_memory = { 0 }) :_name(name), _memory(init_memory) {}
 
 		bitset<MS> get_all() const {
 			return _memory;
@@ -44,7 +44,7 @@ namespace State {
 		}
 
 	private:
-		const string_view& _name;
-		bitset<MS>         _memory;
+		const string _name;
+		bitset<MS>   _memory;
 	};
 }
