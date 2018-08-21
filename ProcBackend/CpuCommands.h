@@ -83,8 +83,8 @@ namespace Logics {
 
 		void SUM(const bitset<BS>& x, const bitset<BS>& y) {
 			Utils::log_line("CpuCommands.SUM(x = ", x, ", y = ", y, ")");
-			auto x_value = _cpu.get_bits(_regs.get_CN(x));
-			auto y_value = _cpu.get_bits(_regs.get_CN(y));
+			auto x_value = _cpu[_regs.get_CN(x)];
+			auto y_value = _cpu[_regs.get_CN(y)];
 			auto[result, overflow] = BitUtils::plus(x_value, y_value);
 			_logics.set_overflow(overflow);
 			_cpu.set_bits(_regs.AR, result);
@@ -93,7 +93,7 @@ namespace Logics {
 		void MOV(const bitset<BS>& x, const bitset<BS>& y) {
 			Utils::log_line("CpuCommands.MOV(x = ", x, ", y = ", y, ")");
 			auto y_addr = _regs.get_CN(y);
-			auto y_value = _cpu.get_bits(y_addr);
+			auto y_value = _cpu[y_addr];
 			Utils::log_line("CpuCommands.MOV(r[", y_addr, "] = ", y_value, ") => ");
 			auto x_addr = _regs.get_CN(x);
 			_cpu.set_bits(x_addr, y_value);

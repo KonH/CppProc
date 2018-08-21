@@ -50,16 +50,16 @@ namespace Logics {
 		Ram         _ram;
 
 		bool is_enabled() {
-			return _control_bus.get_bits(Reference<1>(0)).test(0);
+			return _control_bus[Reference<1>(0)].test(0);
 		}
 		
 		bool is_write() {
-			return _control_bus.get_bits(Reference<1>(1)).test(0);
+			return _control_bus[Reference<1>(1)].test(0);
 		}
 		
 		void process_read(bitset<BS> address) {
 			Utils::log_line("RamRunner.process_read(", address, ")");
-			auto value = _ram.get_bits(Reference<BS>(address.to_ulong()));
+			auto value = _ram[Reference<BS>(address.to_ulong())];
 			_data_bus.set_bits(Reference<BS>(0), value);
 		}
 

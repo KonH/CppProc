@@ -67,7 +67,7 @@ namespace Logics {
 				return false;
 			}
 			Utils::log_line("CpuRunner.tick: continue execution.");
-			auto state = _cpu.get_bits(_regs.PipelineState);
+			auto state = _cpu[_regs.PipelineState];
 			auto step = get_step(state);
 			step(this);
 			return !is_terminated();
@@ -98,7 +98,7 @@ namespace Logics {
 			_cpu.set_zero(_regs.CommandCode);
 			_cpu.set_zero(_regs.Arg1);
 			_cpu.set_zero(_regs.Arg2);
-			auto ip = _cpu.get_bits(_regs.IP);
+			auto ip = _cpu[_regs.IP];
 			Reference<BS> command(ip.to_ulong());
 			request_ram_read(command);
 			_logics.inc_register(Reference<3>(_regs.PipelineState));
@@ -106,7 +106,7 @@ namespace Logics {
 
 		void tick_decode() {
 			Utils::log_line("CpuRunner.tick_decode");
-			auto code = _data.get_bits(Reference<BS>(0));
+			auto code = _data[Reference<BS>(0)];
 			_cpu.set_bits(Reference<BS>(_regs.CommandCode), code);
 			if (auto [has_handler, handler] = get_cur_handler(); has_handler) {
 				auto args = handler.Arguments;
@@ -115,7 +115,7 @@ namespace Logics {
 				}
 				else {
 					set_next_step(0b010, args > 1); // read #1
-					auto ip = _cpu.get_bits(_regs.IP);
+					auto ip = _cpu[_regs.IP];
 					request_ram_read(ip.to_ulong() + BS);
 				}
 			} else {
@@ -125,11 +125,11 @@ namespace Logics {
 
 		void tick_read_1() {
 			Utils::log_line("CpuRunner.tick_read_1");
-			auto arg1 = _data.get_bits(Reference<BS>(0));
+			auto arg1 = _data[Reference<BS>(0)];
 			_cpu.set_bits(Reference<BS>(_regs.Arg1), arg1);
-			if (_cpu.get_bits(_regs.ArgumentMode).test(0)) {
+			if (_cpu[_regs.ArgumentMode].test(0)) {
 				set_next_step(0b011); // read #2
-				auto ip = _cpu.get_bits(_regs.IP);
+				auto ip = _cpu[_regs.IP];
 				request_ram_read(ip.to_ulong() + BS * 2);
 			} else {
 				set_next_step(0b100); // execute
@@ -138,7 +138,7 @@ namespace Logics {
 
 		void tick_read_2() {
 			Utils::log_line("CpuRunner.tick_read_2");
-			auto arg2 = _data.get_bits(Reference<BS>(0));
+			auto arg2 = _data[Reference<BS>(0)];
 			_cpu.set_bits(Reference<BS>(_regs.Arg2), arg2);
 			_logics.inc_register(Reference<3>(_regs.PipelineState));
 		}
@@ -199,13 +199,13 @@ namespace Logics {
 		}
 		
 		auto get_cur_handler() {
-			auto command_code = _cpu.get_bits(_regs.CommandCode);
+			auto command_code = _cpu[_regs.CommandCode];
 			auto handler = _commands.get_handler(command_code);
 			return handler;
 		}
 
 		bool is_terminated() {
-			return _cpu.get_bits(_regs.Terminated).test(0);
+			return _cpu[_regs.Terminated].test(0);
 		}
 
 		void raise_fatal() {
@@ -234,8 +234,8 @@ namespace Logics {
 		}
 
 		auto read_args() {
-			auto arg1 = _cpu.get_bits(_regs.Arg1);
-			auto arg2 = _cpu.get_bits(_regs.Arg2);
+			auto arg1 = _cpu[_regs.Arg1];
+			auto arg2 = _cpu[_regs.Arg2];
 			return tuple { arg1, arg2 };
 		}
 	};

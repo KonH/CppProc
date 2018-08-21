@@ -171,18 +171,18 @@ namespace Tests {
 			
 			auto ms3 = MemoryState<4>("");
 			ms3.set_bits(Reference<1>(), bitset<1>(1));
-			assert_true(ms3.get_bits(Reference<1>()).test(0));
+			assert_true(ms3[Reference<1>()].test(0));
 			assert_true(ms3.get_all().test(0));
 			
 			auto ms4 = MemoryState<4>("");
 			ms4.set_bits(Reference<1>(3), bitset<1>(1));
-			assert_true(ms4.get_bits(Reference<1>(3)).test(0));
+			assert_true(ms4[Reference<1>(3)].test(0));
 			assert_true(ms4.get_all().test(3));
 			
 			RegisterSet<4, 64> regs;
 			auto ms5 = MemoryState<64>("");
 			ms5.set_bits(regs.Overflow, bitset<1>(1));
-			assert_true(ms5.get_bits(regs.Overflow).test(0));
+			assert_true(ms5[regs.Overflow].test(0));
 			assert_true(ms5.get_all().test(regs.Overflow.Address));
 		}
 		
@@ -195,10 +195,10 @@ namespace Tests {
 		void overflow_always_saved() {
 			auto cmp = Computer<4, 32, 8>(0b00000000); // NOOP
 			cmp.State.CPU.set_bits(cmp.Registers.Overflow, BitUtils::get_one<1>());
-			auto before = cmp.State.CPU.get_bits(cmp.Registers.Overflow);
+			auto before = cmp.State.CPU[cmp.Registers.Overflow];
 			assert_equal(before, BitUtils::get_one<1>());
 			cmp.tick(3); // fetch, decode, execute
-			auto after = cmp.State.CPU.get_bits(cmp.Registers.Overflow);
+			auto after = cmp.State.CPU[cmp.Registers.Overflow];
 			assert_equal(after, BitUtils::get_zero<1>());
 		}
 		
@@ -232,17 +232,17 @@ namespace Tests {
 			MemoryState<64> cpu("");
 			CpuLogics<4, 64> logics(regs, cpu);
 			
-			assert_true(!cpu.get_bits<1>(regs.Overflow).test(0));
+			assert_true(!cpu[regs.Overflow].test(0));
 			logics.set_overflow(true);
-			assert_true(cpu.get_bits<1>(regs.Overflow).test(0));
+			assert_true(cpu[regs.Overflow].test(0));
 			
-			assert_equal(cpu.get_bits(regs.get_CN(0)), BitUtils::get_zero<4>());
+			assert_equal(cpu[regs.get_CN(0)], BitUtils::get_zero<4>());
 			logics.add_to_register(regs.get_CN(0), BitUtils::get_one<4>());
-			assert_equal(cpu.get_bits(regs.get_CN(0)), BitUtils::get_one<4>());
+			assert_equal(cpu[regs.get_CN(0)], BitUtils::get_one<4>());
 			
-			assert_equal(cpu.get_bits(regs.get_CN(1)), BitUtils::get_zero<4>());
+			assert_equal(cpu[regs.get_CN(1)], BitUtils::get_zero<4>());
 			logics.inc_register(regs.get_CN(1));
-			assert_equal(cpu.get_bits(regs.get_CN(1)), BitUtils::get_one<4>());
+			assert_equal(cpu[regs.get_CN(1)], BitUtils::get_one<4>());
 		}
 		
 		void ram_runner_read() {
@@ -251,12 +251,12 @@ namespace Tests {
 			auto cb = MemoryState<2>("");
 			auto ab = MemoryState<4>("");
 			RamRunner<4, 4> runner(cb, ab, db, ram);
-			auto before = db.get_bits(Reference<4>(0));
+			auto before = db[Reference<4>(0)];
 			assert_equal(before, BitUtils::get_zero<4>());
 			cb.set_bits(Reference<2>(0), bitset<2>(0b01));
 			runner.tick();
-			auto after = db.get_bits(Reference<4>(0));
-			assert_equal(after, ram.get_bits(Reference<4>()));
+			auto after = db[Reference<4>(0)];
+			assert_equal(after, ram[Reference<4>()]);
 		}
 		
 		void ram_runner_write() {
@@ -266,12 +266,12 @@ namespace Tests {
 			auto ab = MemoryState<4>("");
 			RamRunner<4, 4> runner(cb, ab, db, ram);
 			auto data = bitset<4>(0b1111);
-			auto before = ram.get_bits(Reference<4>(0));
+			auto before = ram[Reference<4>(0)];
 			assert_equal(before, BitUtils::get_zero<4>());
 			cb.set_bits(Reference<2>(0), bitset<2>(0b11));
 			db.set_bits(Reference<4>(0), data);
 			runner.tick();
-			auto after = ram.get_bits(Reference<4>(0));
+			auto after = ram[Reference<4>(0)];
 			assert_equal(after, data);
 		}
 		
@@ -287,18 +287,18 @@ namespace Tests {
 		void unknown() {
 			auto cmp = Computer<4, 32, 4>(0b1111);
 			cmp.tick(2); // fetch, decode
-			auto fatal = cmp.State.CPU.get_bits(cmp.Registers.Fatal);
+			auto fatal = cmp.State.CPU[cmp.Registers.Fatal];
 			assert_equal(fatal, 0b1);
 		}
 		
 		void NOOP() {
 			auto cmp = Computer<4, 32, 4>(0b0000);
 			cmp.tick(3); // fetch, decode, execute
-			auto counter = cmp.State.CPU.get_bits(cmp.Registers.Counter);
+			auto counter = cmp.State.CPU[cmp.Registers.Counter];
 			assert_equal(counter, 0b1);
-			auto ip = cmp.State.CPU.get_bits(cmp.Registers.IP);
+			auto ip = cmp.State.CPU[cmp.Registers.IP];
 			assert_equal(ip, 4);
-			auto overflow = cmp.State.CPU.get_bits(cmp.Registers.Overflow);
+			auto overflow = cmp.State.CPU[cmp.Registers.Overflow];
 			assert_equal(overflow, 0b0);
 		}
 		
@@ -308,17 +308,17 @@ namespace Tests {
 			assert_true(t1_performing, "performing");
 			auto t2_terminated = !cmp.tick(1); // execute
 			assert_true(t2_terminated, "terminated");
-			assert_equal(cmp.State.CPU.get_bits(cmp.Registers.Terminated), 0b1, "flag is set");
+			assert_equal(cmp.State.CPU[cmp.Registers.Terminated], 0b1, "flag is set");
 		}
 		
 		void CLR() {
 			auto cmp = Computer<4, 32 + 4, 8>(0b00000010);
 			auto c0 = cmp.Registers.get_CN(0);
 			cmp.State.CPU.set_bits(c0, BitUtils::get_one<4>());
-			auto before = cmp.State.CPU.get_bits(c0);
+			auto before = cmp.State.CPU[c0];
 			assert_equal(before, BitUtils::get_one<4>());
 			cmp.tick(4); // fetch, decode, read 1, execute
-			auto after = cmp.State.CPU.get_bits(c0);
+			auto after = cmp.State.CPU[c0];
 			assert_equal(after, BitUtils::get_zero<4>());
 		}
 		
@@ -326,10 +326,10 @@ namespace Tests {
 			auto cmp = Computer<4, 32 + 4, 8>(0b00000011);
 			auto c0 = cmp.Registers.get_CN(0);
 			cmp.State.CPU.set_bits(c0, BitUtils::get_zero<4>());
-			auto before = cmp.State.CPU.get_bits(c0);
+			auto before = cmp.State.CPU[c0];
 			assert_equal(before, BitUtils::get_zero<4>());
 			cmp.tick(4); // fetch, decode, read 1, execute
-			auto after = cmp.State.CPU.get_bits(c0);
+			auto after = cmp.State.CPU[c0];
 			assert_equal(after, BitUtils::get_one<4>());
 		}
 		
@@ -339,10 +339,10 @@ namespace Tests {
 			auto c1 = cmp.Registers.get_CN(1);
 			cmp.State.CPU.set_bits(c0, BitUtils::get_one<4>());
 			cmp.State.CPU.set_bits(c1, BitUtils::get_set<4>(2));
-			auto ar_before = cmp.State.CPU.get_bits(cmp.Registers.AR);
+			auto ar_before = cmp.State.CPU[cmp.Registers.AR];
 			assert_equal(ar_before, BitUtils::get_zero<4>());
 			cmp.tick(5); // fetch, decode, read 1, read 2, execute
-			auto ar_after = cmp.State.CPU.get_bits(cmp.Registers.AR);
+			auto ar_after = cmp.State.CPU[cmp.Registers.AR];
 			assert_equal(ar_after, BitUtils::get_set<4>(3));
 		}
 		
@@ -354,10 +354,10 @@ namespace Tests {
 			auto c0 = cmp.Registers.get_CN(0);
 			auto c1 = cmp.Registers.get_CN(1);
 			cmp.State.CPU.set_bits(c0, BitUtils::get_one<4>());
-			auto c1_before = cmp.State.CPU.get_bits(c1);
+			auto c1_before = cmp.State.CPU[c1];
 			assert_equal(c1_before, BitUtils::get_zero<4>());
 			cmp.tick(5); // fetch, decode, read 1, read 2, execute
-			auto c1_after = cmp.State.CPU.get_bits(c1);
+			auto c1_after = cmp.State.CPU[c1];
 			assert_equal(c1_after, BitUtils::get_one<4>());
 		}
 		

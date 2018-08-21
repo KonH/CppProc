@@ -24,7 +24,7 @@ namespace Logics {
 		template<size_t SZ>
 		bool add_to_register(Reference<SZ> ref, const bitset<SZ>& value) {
 			Utils::log_line("CpuLogics.add_to_register(", ref, ", ", value, ")");
-			auto old_value = _cpu.get_bits(ref);
+			auto old_value = _cpu[ref];
 			auto[new_value, overflow] = BitUtils::plus(old_value, value);
 			_cpu.set_bits(ref, new_value);
 			set_overflow(overflow);

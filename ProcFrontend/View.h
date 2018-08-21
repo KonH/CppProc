@@ -36,27 +36,27 @@ namespace View {
 	void print_registers(const RegisterSet<BS, IMS>& regs, const ComputerState<BS, IMS, RMS>& state) {
 		auto& cpu = state.CPU;
 		
-		cout << "Ss: " << cpu.get_bits(regs.System);
-		cout << " (pipeline state: " << cpu.get_bits(regs.PipelineState);
-		cout << ", argument mode: " << cpu.get_bits(regs.ArgumentMode) << ")" << endl;
+		cout << "Ss: " << cpu[regs.System];
+		cout << " (pipeline state: " << cpu[regs.PipelineState];
+		cout << ", argument mode: " << cpu[regs.ArgumentMode] << ")" << endl;
 
-		print_register("CC", cpu.get_bits(regs.CommandCode));
-		print_register("A1", cpu.get_bits(regs.Arg1));
-		print_register("A2", cpu.get_bits(regs.Arg2));
+		print_register("CC", cpu[regs.CommandCode]);
+		print_register("A1", cpu[regs.Arg1]);
+		print_register("A2", cpu[regs.Arg2]);
 
-		cout << "Fs: " << cpu.get_bits(regs.Flags);
-		cout << " (terminated: " << cpu.get_bits(regs.Terminated);
-		cout << ", overflow: " << cpu.get_bits(regs.Overflow);
-		cout << ", fatal: " << cpu.get_bits(regs.Fatal) << ")" << endl;
+		cout << "Fs: " << cpu[regs.Flags];
+		cout << " (terminated: " << cpu[regs.Terminated];
+		cout << ", overflow: " << cpu[regs.Overflow];
+		cout << ", fatal: " << cpu[regs.Fatal] << ")" << endl;
 		
-		print_register("Cr", cpu.get_bits(regs.Counter));
-		print_register("IP", cpu.get_bits(regs.IP));
-		print_register("AP", cpu.get_bits(regs.AR));
+		print_register("Cr", cpu[regs.Counter]);
+		print_register("IP", cpu[regs.IP]);
+		print_register("AP", cpu[regs.AR]);
 
 		auto cn = regs.get_CN_count();
 		for (int i = 0; i < cn; i++) {
 			auto addr = bitset<BS>(i);
-			print_register("C" + std::to_string(i), state.CPU.get_bits(regs.get_CN(addr)));
+			print_register("C" + std::to_string(i), state.CPU[regs.get_CN(addr)]);
 		}
 	}
 
