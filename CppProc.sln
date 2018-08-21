@@ -3,20 +3,24 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2047
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcFrontend", "ProcFrontend\ProcFrontend.vcxproj", "{2FFCF62D-CF63-4557-9D62-06946FD355F3}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcBackend", "ProcBackend\ProcBackend.vcxitems", "{44849872-9BC3-401D-A64A-72A367CF7125}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{830ACF29-9212-485E-AC50-A8E7F6CE6D6A}"
 	ProjectSection(SolutionItems) = preProject
 		raw_mem.txt = raw_mem.txt
 		run_tests.bat = run_tests.bat
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Windows", "Windows\Windows.vcxproj", "{5DD6DCA8-433A-488C-AC85-C1F367E52564}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcBackend", "ProcBackend\ProcBackend.vcxitems", "{0D0D6702-80CE-422A-A91D-5BB5B43EEA09}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcFrontend", "ProcFrontend\ProcFrontend.vcxitems", "{D419A8FE-EC1D-492A-BBD3-6275AE495193}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		ProcBackend\ProcBackend.vcxitems*{2ffcf62d-cf63-4557-9d62-06946fd355f3}*SharedItemsImports = 4
-		ProcBackend\ProcBackend.vcxitems*{44849872-9bc3-401d-a64a-72a367cf7125}*SharedItemsImports = 9
+		ProcBackend\ProcBackend.vcxitems*{0d0d6702-80ce-422a-a91d-5bb5b43eea09}*SharedItemsImports = 9
+		ProcBackend\ProcBackend.vcxitems*{5dd6dca8-433a-488c-ac85-c1f367e52564}*SharedItemsImports = 4
+		ProcFrontend\ProcFrontend.vcxitems*{5dd6dca8-433a-488c-ac85-c1f367e52564}*SharedItemsImports = 4
+		ProcFrontend\ProcFrontend.vcxitems*{d419a8fe-ec1d-492a-bbd3-6275ae495193}*SharedItemsImports = 9
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -25,14 +29,14 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Debug|x64.ActiveCfg = Debug|x64
-		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Debug|x64.Build.0 = Debug|x64
-		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Debug|x86.ActiveCfg = Debug|Win32
-		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Debug|x86.Build.0 = Debug|Win32
-		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Release|x64.ActiveCfg = Release|x64
-		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Release|x64.Build.0 = Release|x64
-		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Release|x86.ActiveCfg = Release|Win32
-		{2FFCF62D-CF63-4557-9D62-06946FD355F3}.Release|x86.Build.0 = Release|Win32
+		{5DD6DCA8-433A-488C-AC85-C1F367E52564}.Debug|x64.ActiveCfg = Debug|x64
+		{5DD6DCA8-433A-488C-AC85-C1F367E52564}.Debug|x64.Build.0 = Debug|x64
+		{5DD6DCA8-433A-488C-AC85-C1F367E52564}.Debug|x86.ActiveCfg = Debug|Win32
+		{5DD6DCA8-433A-488C-AC85-C1F367E52564}.Debug|x86.Build.0 = Debug|Win32
+		{5DD6DCA8-433A-488C-AC85-C1F367E52564}.Release|x64.ActiveCfg = Release|x64
+		{5DD6DCA8-433A-488C-AC85-C1F367E52564}.Release|x64.Build.0 = Release|x64
+		{5DD6DCA8-433A-488C-AC85-C1F367E52564}.Release|x86.ActiveCfg = Release|Win32
+		{5DD6DCA8-433A-488C-AC85-C1F367E52564}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

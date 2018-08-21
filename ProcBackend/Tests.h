@@ -28,18 +28,13 @@ using State::ComputerState;
 using Architecture::RegisterSet;
 
 namespace Tests {
-	namespace Common {
-		void sizes() {
-			assert_true(sizeof(size_t) == sizeof(unsigned long));
-		}
-		
+	namespace Common {		
 		void assert_check() {
 			assert_true(true);
 		}
 		
 		void test() {
 			TestRunner tr("common");
-			tr.run_test(sizes, "sizes");
 			tr.run_test(assert_check, "assert_check");
 		}
 	}

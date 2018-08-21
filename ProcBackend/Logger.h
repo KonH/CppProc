@@ -29,10 +29,14 @@ namespace Utils {
 	void log_line(Args&&... args) {
 		if (Enabled) {
 			cout << " + ";
-		#pragma clang diagnostic push
-		#pragma clang diagnostic ignored "-Wunused-value"
+		#ifdef __clang__
+			#pragma clang diagnostic push
+			#pragma clang diagnostic ignored "-Wunused-value"
+		#endif
 			(cout << ... << args);
-		#pragma clang diagnostic pop
+		#ifdef __clang__
+			#pragma clang diagnostic pop
+		#endif
 			cout << endl;
 		}
 	}

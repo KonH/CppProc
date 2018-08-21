@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{0d0d6702-80ce-422a-a91d-5bb5b43eea09}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)BitUtils.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Computer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ComputerState.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)CpuCommands.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)CpuLogics.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)CpuRunner.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Logger.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)MemoryState.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)RamRunner.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Reference.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)RegisterSet.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)TestRunner.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Tests.h" />
+  </ItemGroup>
+</Project>
