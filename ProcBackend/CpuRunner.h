@@ -23,9 +23,16 @@ using Logics::CpuLogics;
 using Architecture::RegisterSet;
 
 namespace Logics {
-	template<int BS, int IMS, int RMS>
+	template<size_t BS, size_t IMS, size_t RMS>
 	class CpuRunner {
-
+		using Regs       = const RegisterSet<BS, IMS>&;
+		using CpuMem     = MemoryState<IMS>&;
+		using ControlBus = MemoryState<2>&;
+		using AddrBus    = MemoryState<BS>&;
+		using DataBus    = MemoryState<BS>&;
+		using CpuLogic   = CpuLogics<BS, IMS>;
+		using CpuCommand = CpuCommands<BS, IMS>;
+		
 		using PipelineStep =
 			function<void(CpuRunner*)>;
 
@@ -41,8 +48,9 @@ namespace Logics {
 		};
 
 	public:
-		CpuRunner(const RegisterSet<BS, IMS>& regs, MemoryState<IMS>& cpu, MemoryState<2>& control, MemoryState<BS>& address, MemoryState<BS>& data) :
-			_regs(regs), _cpu(cpu), _control(control), _address(address), _data(data), _logics(CpuLogics(regs, cpu)), _commands(CpuCommands(regs, cpu, _logics)) {}
+		CpuRunner(Regs regs, CpuMem cpu, ControlBus control, AddrBus address, DataBus data):
+		_regs(regs), _cpu(cpu), _control(control), _address(address), _data(data),
+		_logics(CpuLogics(regs, cpu)), _commands(CpuCommands(regs, cpu, _logics)) {}
 
 		bool tick() {
 			Utils::log_line(
@@ -52,27 +60,27 @@ namespace Logics {
 				", data: ", _data.get_all(), ")"
 			);
 
-			_control.set(Reference<2>(0), BitUtils::get_zero<2>());
+			_control.set_zero(Reference<2>(0));
 
 			if (is_terminated()) {
 				Utils::log_line("CpuRunner.tick: terminated.");
 				return false;
 			}
 			Utils::log_line("CpuRunner.tick: continue execution.");
-			auto state = _cpu.get(_regs.PipelineState);
+			auto state = _cpu.get_bits(_regs.PipelineState);
 			auto step = get_step(state);
 			step(this);
 			return !is_terminated();
 		}
 
 	private:
-		const RegisterSet<BS, IMS>& _regs;
-		MemoryState<IMS>&           _cpu;
-		MemoryState<2>&             _control;
-		MemoryState<BS>&            _address;
-		MemoryState<BS>&            _data;
-		CpuLogics<BS, IMS>          _logics;
-		CpuCommands<BS, IMS>        _commands;
+		Regs       _regs;
+		CpuMem     _cpu;
+		ControlBus _control;
+		AddrBus    _address;
+		DataBus    _data;
+		CpuLogic   _logics;
+		CpuCommand _commands;
 
 		map<unsigned long, PipelineStep> _steps = {
 			{ 0b000, &CpuRunner::tick_fetch   }, // request command code
@@ -84,12 +92,13 @@ namespace Logics {
 
 		void tick_fetch() {
 			Utils::log_line("CpuRunner.tick_fetch");
-			_cpu.set(Reference<3>(_regs.PipelineState), BitUtils::get_zero<3> ());
-			_cpu.set(Reference<1>(_regs.ArgumentMode),  BitUtils::get_zero<1> ());
-			_cpu.set(Reference<BS>(_regs.CommandCode),  BitUtils::get_zero<BS>());
-			_cpu.set(Reference<BS>(_regs.Arg1),         BitUtils::get_zero<BS>());
-			_cpu.set(Reference<BS>(_regs.Arg2),         BitUtils::get_zero<BS>());
-			auto ip = _cpu.get(_regs.IP);
+			//_cpu.set(Reference<3>(_regs.PipelineState), BitUtils::get_zero<3> ());
+			_cpu.set_zero(_regs.PipelineState);
+			_cpu.set_zero(_regs.ArgumentMode);
+			_cpu.set_zero(_regs.CommandCode);
+			_cpu.set_zero(_regs.Arg1);
+			_cpu.set_zero(_regs.Arg2);
+			auto ip = _cpu.get_bits(_regs.IP);
 			Reference<BS> command(ip.to_ulong());
 			request_ram_read(command);
 			_logics.inc_register(Reference<3>(_regs.PipelineState));
@@ -97,17 +106,16 @@ namespace Logics {
 
 		void tick_decode() {
 			Utils::log_line("CpuRunner.tick_decode");
-			auto code = _data.get<BS>(Reference<BS>(0));
-			_cpu.set(Reference<BS>(_regs.CommandCode), code);
-			if (auto handler_opt = get_cur_handler<BS, IMS>()) {
-				auto handler = handler_opt.value();
+			auto code = _data.get_bits(Reference<BS>(0));
+			_cpu.set_bits(Reference<BS>(_regs.CommandCode), code);
+			if (auto [has_handler, handler] = get_cur_handler(); has_handler) {
 				auto args = handler.Arguments;
 				if (args == 0) {
 					set_next_step(0b100); // execute
 				}
 				else {
 					set_next_step(0b010, args > 1); // read #1
-					auto ip = _cpu.get(_regs.IP);
+					auto ip = _cpu.get_bits(_regs.IP);
 					request_ram_read(ip.to_ulong() + BS);
 				}
 			} else {
@@ -117,11 +125,11 @@ namespace Logics {
 
 		void tick_read_1() {
 			Utils::log_line("CpuRunner.tick_read_1");
-			auto arg1 = _data.get<BS>(Reference<BS>(0));
-			_cpu.set(Reference<BS>(_regs.Arg1), arg1);
-			if (_cpu.get(_regs.ArgumentMode).test(0)) {
+			auto arg1 = _data.get_bits(Reference<BS>(0));
+			_cpu.set_bits(Reference<BS>(_regs.Arg1), arg1);
+			if (_cpu.get_bits(_regs.ArgumentMode).test(0)) {
 				set_next_step(0b011); // read #2
-				auto ip = _cpu.get(_regs.IP);
+				auto ip = _cpu.get_bits(_regs.IP);
 				request_ram_read(ip.to_ulong() + BS * 2);
 			} else {
 				set_next_step(0b100); // execute
@@ -130,15 +138,14 @@ namespace Logics {
 
 		void tick_read_2() {
 			Utils::log_line("CpuRunner.tick_read_2");
-			auto arg2 = _data.get(Reference<BS>(0));
-			_cpu.set(Reference<BS>(_regs.Arg2), arg2);
+			auto arg2 = _data.get_bits(Reference<BS>(0));
+			_cpu.set_bits(Reference<BS>(_regs.Arg2), arg2);
 			_logics.inc_register(Reference<3>(_regs.PipelineState));
 		}
 
 		void tick_execute() {
 			Utils::log_line("CpuRunner.tick_execute");
-			if (auto handler_opt = get_cur_handler<BS, IMS>()) {
-				auto handler = handler_opt.value();
+			if (auto [has_handler, handler] = get_cur_handler(); has_handler) {
 				auto[y, x] = read_args();
 				handler.Func(_commands, x, y);
 				if (!is_terminated()) {
@@ -153,13 +160,13 @@ namespace Logics {
 
 		void set_next_step(int step) {
 			Utils::log_line("CpuRunner.set_next_step(", step, ")");
-			_cpu.set(Reference<3>(_regs.PipelineState), BitUtils::get_set<3>(step));
+			_cpu.set_bits(Reference<3>(_regs.PipelineState), BitUtils::get_set<3>(step));
 		}
 
 		void set_next_step(int step, bool two_args) {
 			Utils::log_line("CpuRunner.set_next_step(", step, ", ", two_args, ")");
 			set_next_step(step);
-			_cpu.set(Reference<1>(_regs.ArgumentMode), BitUtils::get_set<1>(two_args));
+			_cpu.set_bits(Reference<1>(_regs.ArgumentMode), BitUtils::get_set<1>(two_args));
 		}
 
 		PipelineStep get_step(const bitset<3>& pipeline_state) {
@@ -177,34 +184,34 @@ namespace Logics {
 		}
 
 		void request_ram_read(Reference<BS> address) {
-			Utils::log_line("CpuRunner.request_ram_read: ", address.Address, ":", address.Size);
-			_control.set(Reference<2>(0),  bitset<2>(0b01));
-			_address.set(Reference<BS>(0), BitUtils::get_set<BS>(address.Address));
-			_data.set   (Reference<BS>(0), BitUtils::get_zero<BS>());
+			Utils::log_line("CpuRunner.request_ram_read: ", address);
+			_control.set_bits(Reference<2>(0),  bitset<2>(0b01));
+			_address.set_bits(Reference<BS>(0), BitUtils::get_set<BS>(address.Address));
+			_data   .set_bits(Reference<BS>(0), BitUtils::get_zero<BS>());
 
 		}
 
 		void request_ram_write(Reference<BS> address, bitset<BS> value) {
-			Utils::log_line("CpuRunner.request_ram_write: ", address.Address, ":", address.Size, " = ", value);
-			_control.set(Reference<2>(0),  bitset<2>(0b11));
-			_address.set(Reference<BS>(0), BitUtils::get_set<BS>(address.Address));
-			_data.set   (Reference<BS>(0), value);
+			Utils::log_line("CpuRunner.request_ram_write: ", address, " = ", value);
+			_control.set_bits(Reference<2>(0),  bitset<2>(0b11));
+			_address.set_bits(Reference<BS>(0), BitUtils::get_set<BS>(address.Address));
+			_data   .set_bits(Reference<BS>(0), value);
 		}
-		template<int BS, int IMS>
+		
 		auto get_cur_handler() {
-			auto command_code = _cpu.get(_regs.CommandCode);
+			auto command_code = _cpu.get_bits(_regs.CommandCode);
 			auto handler = _commands.get_handler(command_code);
 			return handler;
 		}
 
 		bool is_terminated() {
-			return _cpu.get(_regs.Terminated).test(0);
+			return _cpu.get_bits(_regs.Terminated).test(0);
 		}
 
 		void raise_fatal() {
 			Utils::log_line("CpuRunner.raise_fatal");
-			_cpu.set<1>(_regs.Fatal, 0b1);
-			_cpu.set<1>(_regs.Terminated, 0b1);
+			_cpu.set_bits(_regs.Fatal,      BitUtils::get_one<1>());
+			_cpu.set_bits(_regs.Terminated, BitUtils::get_one<1>());
 		}
 
 		void inc_counter() {
@@ -214,7 +221,7 @@ namespace Logics {
 
 		void bump_ip(int size) {
 			Utils::log_line("CpuRunner.bump_ip(", size, ")");
-			auto overflow = _logics.add_to_register<BS>(_regs.IP, BitUtils::get_set<BS>(BS * size));
+			auto overflow = _logics.add_to_register(_regs.IP, BitUtils::get_set<BS>(BS * size));
 			if (overflow) {
 				raise_fatal();
 			}
@@ -226,8 +233,10 @@ namespace Logics {
 			bump_ip(size);
 		}
 
-		tuple<bitset<BS>, bitset<BS>> read_args() {
-			return std::make_tuple(_cpu.get(_regs.Arg1), _cpu.get(_regs.Arg2));
+		auto read_args() {
+			auto arg1 = _cpu.get_bits(_regs.Arg1);
+			auto arg2 = _cpu.get_bits(_regs.Arg2);
+			return tuple { arg1, arg2 };
 		}
 	};
 }

@@ -15,16 +15,18 @@ using State::ComputerState;
 using Architecture::RegisterSet;
 
 namespace Core {
-	template<int BaseSize, int InternalMemorySize, int RamMemorySize>
+	template<size_t BaseSize, size_t InternalMemorySize, size_t RamMemorySize>
 	class Computer {
+		using Regs      = RegisterSet  <BaseSize, InternalMemorySize>;
+		using CompState = ComputerState<BaseSize, InternalMemorySize, RamMemorySize>;
 	public:
-		RegisterSet  <BaseSize, InternalMemorySize>                Registers;
-		ComputerState<BaseSize, InternalMemorySize, RamMemorySize> State;
+		Regs Registers;
+		CompState State;
 
 		Computer(bitset<RamMemorySize> init_ram):State(init_ram) { }
 
-		bool tick(int ticks = 1) {
-			for (int i = 0; i < ticks; i++) {
+		bool tick(size_t ticks = 1) {
+			for (size_t i = 0; i < ticks; i++) {
 				Utils::log_line("Computer.tick(", i, ")");
 				auto ram = tick_ram();
 				auto cpu = tick_cpu();

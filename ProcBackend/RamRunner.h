@@ -10,10 +10,14 @@ using std::bitset;
 using State::MemoryState;
 
 namespace Logics {
-	template<int BS, int RMS>
+	template<size_t BS, size_t RMS>
 	class RamRunner {
+		using ControlBus = const MemoryState<2>&;
+		using AddrBus    = const MemoryState<BS>&;
+		using DataBus    = MemoryState<BS>&;
+		using Ram        = MemoryState<RMS>&;
 	public:
-		RamRunner(const MemoryState<2>& control_bus, const MemoryState<BS>& address_bus, MemoryState<BS>& data_bus, MemoryState<RMS>& ram):
+		RamRunner(ControlBus control_bus, AddrBus address_bus, DataBus data_bus, Ram ram):
 			_control_bus(control_bus), _address_bus(address_bus), _data_bus(data_bus), _ram(ram) { }
 
 		bool tick() {
@@ -25,12 +29,11 @@ namespace Logics {
 				", address: ", _address_bus.get_all(),
 				", data: ", _data_bus.get_all(), ")"
 			);
-			auto enabled = _control_bus.get(Reference<1>(0)).test(0);
+			auto enabled = is_enabled();
 			Utils::log_line("RamRunner.tick: enabled(", enabled, ")");
 			if (enabled) {
-				auto is_write = _control_bus.get(Reference<1>(1)).test(0);
 				auto addr = _address_bus.get_all();
-				if (is_write) {
+				if (is_write()) {
 					auto data = _data_bus.get_all();
 					process_write(addr, data);
 				} else {
@@ -41,20 +44,28 @@ namespace Logics {
 		}
 
 	private:
-		const MemoryState<2>&  _control_bus;
-		const MemoryState<BS>& _address_bus;
-		MemoryState<BS>&       _data_bus;
-		MemoryState<RMS>&      _ram;
+		ControlBus  _control_bus;
+		AddrBus     _address_bus;
+		DataBus     _data_bus;
+		Ram         _ram;
 
+		bool is_enabled() {
+			return _control_bus.get_bits(Reference<1>(0)).test(0);
+		}
+		
+		bool is_write() {
+			return _control_bus.get_bits(Reference<1>(1)).test(0);
+		}
+		
 		void process_read(bitset<BS> address) {
 			Utils::log_line("RamRunner.process_read(", address, ")");
-			auto value = _ram.get(Reference<BS>(address.to_ulong()));
-			_data_bus.set(Reference<BS>(0), value);
+			auto value = _ram.get_bits(Reference<BS>(address.to_ulong()));
+			_data_bus.set_bits(Reference<BS>(0), value);
 		}
 
 		void process_write(bitset<BS> address, bitset<BS> data) {
 			Utils::log_line("RamRunner.process_write(", address, ", ", data, ")");
-			_ram.set(Reference<BS>(address.to_ulong()), data);
+			_ram.set_bits(Reference<BS>(address.to_ulong()), data);
 		}
 	};
 }
