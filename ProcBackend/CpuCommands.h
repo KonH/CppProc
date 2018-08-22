@@ -27,7 +27,7 @@ namespace Logics {
 		
 	public:
 		using HandlerFunc =
-			function<void(CpuCommands, const bitset<BS>&, const bitset<BS>&)>;
+			function<bool(CpuCommands, const int step, const bitset<BS>&, const bitset<BS>&)>;
 
 		class Handler {
 		public:
@@ -49,24 +49,27 @@ namespace Logics {
 			else {
 				Utils::log_line("CpuCommands.get_handler: unknown command!");
 			}
-			return { false, Handler(0, [](auto c, const auto& x, const auto& y) { }) };
+			return { false, Handler(0, [](auto c, const int step, const auto& x, const auto& y) { return true; }) };
 		}
 
 	private:
-		#define HANDLER_0(func) { 0, [](auto c, const auto& x, const auto& y) { c.func();     } }
-		#define HANDLER_1(func) { 1, [](auto c, const auto& x, const auto& y) { c.func(x);    } }
-		#define HANDLER_2(func) { 2, [](auto c, const auto& x, const auto& y) { c.func(x, y); } }
-        
+		#define HANDLER_0(func)  { 0, [](auto c, const int step, const auto& x, const auto& y) { c.func();     return true; } }
+		#define HANDLER_1(func)  { 1, [](auto c, const int step, const auto& x, const auto& y) { c.func(x);    return true; } }
+		#define HANDLER_2(func)  { 2, [](auto c, const int step, const auto& x, const auto& y) { c.func(x, y); return true; } }
+		
+		#define HANDLER_2N(func) { 2, [](auto c, const int step, const auto& x, const auto& y) { return c.func(step, x, y); } }
+		
 		map<unsigned long, Handler> _commands = {
-			{ 0b0000, HANDLER_0(NOOP) }, // NOOP _ _ => no operation, just bump IP & inc Counter
-			{ 0b0001, HANDLER_0(RST)  }, // RST  _ _ => set Terminated flag
-			{ 0b0010, HANDLER_1(CLR)  }, // CLR  x _ => clear given common register (r[x])
-			{ 0b0011, HANDLER_1(INC)  }, // INC  x _ => increment given common register
-			{ 0b0100, HANDLER_2(SUM)  }, // SUM  y x => r[y] + r[x] will be saved to AC
-			{ 0b0101, HANDLER_2(MOV)  }, // MOV  y x => move r[x] value to r[y]
-            { 0b0110, HANDLER_0(RSTA) }, // RSTA _ _ => clear AR register
-            { 0b0111, HANDLER_0(INCA) }, // INCA _ _ => increment AR register
-            { 0b1000, HANDLER_1(ADDA) }, // ADDA x _ => add r[x] to AR register
+			{ 0b0000, HANDLER_0 (NOOP) }, // NOOP _ _ => no operation, just bump IP & inc Counter
+			{ 0b0001, HANDLER_0 (RST)  }, // RST  _ _ => set Terminated flag
+			{ 0b0010, HANDLER_1 (CLR)  }, // CLR  x _ => clear given common register (r[x])
+			{ 0b0011, HANDLER_1 (INC)  }, // INC  x _ => increment given common register
+			{ 0b0100, HANDLER_2 (SUM)  }, // SUM  y x => r[y] + r[x] will be saved to AC
+			{ 0b0101, HANDLER_2 (MOV)  }, // MOV  y x => move r[x] value to r[y]
+            { 0b0110, HANDLER_0 (RSTA) }, // RSTA _ _ => clear AR register
+            { 0b0111, HANDLER_0 (INCA) }, // INCA _ _ => increment AR register
+            { 0b1000, HANDLER_1 (ADDA) }, // ADDA x _ => add r[x] to AR register
+			{ 0b1001, HANDLER_2N(LD)   }, // LD   y x => load data from ram by address at r[x] to r[y]
 		};
         
         using CmdArg = const bitset<BS>&;
@@ -122,6 +125,23 @@ namespace Logics {
 		void ADDA(CmdArg x) {
 			Utils::log_line("CpuCommands.ADDA(", x, ")");
 			_logics.add_to_register(_regs.AR, x);
+		}
+		
+		bool LD(int step, CmdArg x, CmdArg y) {
+			switch (step) {
+				case 0:
+					Utils::log_line("CpuCommands.LD_0(", x, ", ", y, ")");
+					_logics.request_ram_read(Reference<BS>(y.to_ulong()));
+					return false;
+					
+				case 1:
+					Utils::log_line("CpuCommands.LD_1(", x, ", ", y, ")");
+					auto value = _logics.read_data_bus();
+					Utils::log_line("CpuCommands.LD_1: readed value: ", value);
+					_cpu.set_bits(_regs.get_CN(x), value);
+					return true;
+			}
+			return true;
 		}
 
 	private:

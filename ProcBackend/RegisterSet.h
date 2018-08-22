@@ -21,7 +21,7 @@ namespace Architecture {
 
 		// Examples below for BaseSize == 4
 
-		// 00 System 0 Pipeline State (000 - Fetch, 001 - Decode, 010 - Read 1th, 011 - Read 2th, 100 - Execute)
+		// 00 System 0 Pipeline State (000 - Fetch, 001 - Decode, 010 - Read 1th, 011 - Read 2th, 100 - Execute 1, 101 - Execute 2)
 		// 01        1
 		// 02        2
 		// 03        3 Argument mode (is 2th argument required)

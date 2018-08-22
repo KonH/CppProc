@@ -230,7 +230,10 @@ namespace Tests {
 		void cpu_logics() {
 			RegisterSet<4, 64> regs;
 			MemoryState<64> cpu("");
-			CpuLogics<4, 64> logics(regs, cpu);
+			MemoryState<2> control("");
+			MemoryState<4> data("");
+			MemoryState<4> address("");
+			CpuLogics<4, 64> logics(regs, cpu, control, data, address);
 			
 			assert_true(!cpu[regs.Overflow].test(0));
 			logics.set_overflow(true);
@@ -389,7 +392,6 @@ namespace Tests {
 		}
 		
 		void ADDA() {
-			Utils::enable_log();
 			auto cmp = Computer<4, 32 + 8, 8>(0b00011000);
 			cmp.State.CPU.set_bits(cmp.Registers.get_CN(1), BitUtils::get_one<4>());
 			auto ar = cmp.Registers.AR;
@@ -401,6 +403,23 @@ namespace Tests {
 			
 			auto after = cmp.State.CPU[ar];
 			assert_equal(after, BitUtils::get_one<4>());
+		}
+		
+		void LD() {
+			// LD    x(r) y(m) m
+			// 10001 0001 0010 0110
+			// y(r) - register index to save
+			// x(m) - memory address to read
+			auto cmp = Computer<4, 32 + 8, 12 + 4>(0b0110001000011001);
+			auto c1 = cmp.Registers.get_CN(1);
+			
+			auto before = cmp.State.CPU[c1];
+			assert_equal(before, BitUtils::get_zero<4>());
+			
+			cmp.tick(6); // fetch, decode, read 1, read 2, execute 1, execute 2
+			
+			auto after = cmp.State.CPU[c1];
+			assert_equal(after, bitset<4>(0b0110));
 		}
 		
 		void test() {
@@ -415,6 +434,7 @@ namespace Tests {
 			tr.run_test(RSTA, "RSTA");
 			tr.run_test(INCA, "INCA");
 			tr.run_test(ADDA, "ADDA");
+			tr.run_test(LD, "LD");
 		}
 	}
 	
