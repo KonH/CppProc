@@ -53,18 +53,23 @@ namespace Logics {
 		}
 
 	private:
-        #define HANDLER_0(func) { 0, [](auto c, const auto& x, const auto& y) { c.func();  } }
-        #define HANDLER_1(func) { 1, [](auto c, const auto& x, const auto& y) { c.func(x); } }
-        #define HANDLER_2(func) { 2, [](auto c, const auto& x, const auto& y) { c.func(x, y); } }
+		#define HANDLER_0(func) { 0, [](auto c, const auto& x, const auto& y) { c.func();     } }
+		#define HANDLER_1(func) { 1, [](auto c, const auto& x, const auto& y) { c.func(x);    } }
+		#define HANDLER_2(func) { 2, [](auto c, const auto& x, const auto& y) { c.func(x, y); } }
         
 		map<unsigned long, Handler> _commands = {
 			{ 0b0000, HANDLER_0(NOOP) }, // NOOP _ _ => no operation, just bump IP & inc Counter
 			{ 0b0001, HANDLER_0(RST)  }, // RST  _ _ => set Terminated flag
 			{ 0b0010, HANDLER_1(CLR)  }, // CLR  x _ => clear given common register (r[x])
-			{ 0b0011, HANDLER_1(INC)  }, // INC  x _ => inc given common register
+			{ 0b0011, HANDLER_1(INC)  }, // INC  x _ => increment given common register
 			{ 0b0100, HANDLER_2(SUM)  }, // SUM  y x => r[y] + r[x] will be saved to AC
 			{ 0b0101, HANDLER_2(MOV)  }, // MOV  y x => move r[x] value to r[y]
+            { 0b0110, HANDLER_0(RSTA) }, // RSTA _ _ => clear AR register
+            { 0b0111, HANDLER_0(INCA) }, // INCA _ _ => increment AR register
+            { 0b1000, HANDLER_1(ADDA) }, // ADDA x _ => add r[x] to AR register
 		};
+        
+        using CmdArg = const bitset<BS>&;
 
 		void NOOP() {
 			Utils::log_line("CpuCommands.NOOP");
@@ -75,17 +80,17 @@ namespace Logics {
 			_cpu.set_bits(_regs.Terminated, bitset<1>(0b1));
 		}
 
-		void CLR(const bitset<BS>& x) {
+		void CLR(CmdArg x) {
 			Utils::log_line("CpuCommands.CLR(x = ", x, ")");
 			_cpu.set_bits(_regs.get_CN(x), BitUtils::get_zero<BS>());
 		}
 
-		void INC(const bitset<BS>& x) {
+		void INC(CmdArg x) {
 			Utils::log_line("CpuCommands.INC(x = ", x, ")");
 			_logics.inc_register(_regs.get_CN(x));
 		}
 
-		void SUM(const bitset<BS>& x, const bitset<BS>& y) {
+		void SUM(CmdArg x, CmdArg y) {
 			Utils::log_line("CpuCommands.SUM(x = ", x, ", y = ", y, ")");
 			auto x_value = _cpu[_regs.get_CN(x)];
 			auto y_value = _cpu[_regs.get_CN(y)];
@@ -94,7 +99,7 @@ namespace Logics {
 			_cpu.set_bits(_regs.AR, result);
 		}
 
-		void MOV(const bitset<BS>& x, const bitset<BS>& y) {
+		void MOV(CmdArg x, CmdArg y) {
 			Utils::log_line("CpuCommands.MOV(x = ", x, ", y = ", y, ")");
 			auto y_addr = _regs.get_CN(y);
 			auto y_value = _cpu[y_addr];
@@ -102,6 +107,21 @@ namespace Logics {
 			auto x_addr = _regs.get_CN(x);
 			_cpu.set_bits(x_addr, y_value);
 			Utils::log_line("CpuCommands.MOV(r[", x_addr, "])");
+		}
+
+		void RSTA() {
+			Utils::log_line("CpuCommands.RSTA");
+			_cpu.set_zero(_regs.AR);
+		}
+		
+		void INCA() {
+			Utils::log_line("CpuCommands.INCA");
+			_logics.inc_register(_regs.AR);
+		}
+		
+		void ADDA(CmdArg x) {
+			Utils::log_line("CpuCommands.ADDA(", x, ")");
+			_logics.add_to_register(_regs.AR, x);
 		}
 
 	private:

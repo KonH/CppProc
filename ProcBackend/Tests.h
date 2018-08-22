@@ -361,6 +361,48 @@ namespace Tests {
 			assert_equal(c1_after, BitUtils::get_one<4>());
 		}
 		
+		void RSTA() {
+			auto cmp = Computer<4, 32, 4>(0b0110);
+			auto ar = cmp.Registers.AR;
+			cmp.State.CPU.set_bits(ar, BitUtils::get_one<4>());
+			
+			auto before = cmp.State.CPU[ar];
+			assert_equal(before, BitUtils::get_one<4>());
+			
+			cmp.tick(3); // fetch, decode, execute
+			
+			auto after = cmp.State.CPU[ar];
+			assert_equal(after, BitUtils::get_zero<4>());
+		}
+		
+		void INCA() {
+			auto cmp = Computer<4, 32, 4>(0b0111);
+			auto ar = cmp.Registers.AR;
+			
+			auto before = cmp.State.CPU[ar];
+			assert_equal(before, BitUtils::get_zero<4>());
+			
+			cmp.tick(3); // fetch, decode, execute
+			
+			auto after = cmp.State.CPU[ar];
+			assert_equal(after, BitUtils::get_one<4>());
+		}
+		
+		void ADDA() {
+			Utils::enable_log();
+			auto cmp = Computer<4, 32 + 8, 8>(0b00011000);
+			cmp.State.CPU.set_bits(cmp.Registers.get_CN(1), BitUtils::get_one<4>());
+			auto ar = cmp.Registers.AR;
+			
+			auto before = cmp.State.CPU[ar];
+			assert_equal(before, BitUtils::get_zero<4>());
+			
+			cmp.tick(4); // fetch, decode, read 1, execute
+			
+			auto after = cmp.State.CPU[ar];
+			assert_equal(after, BitUtils::get_one<4>());
+		}
+		
 		void test() {
 			TestRunner tr("commands");
 			tr.run_test(unknown, "unknown");
@@ -370,6 +412,9 @@ namespace Tests {
 			tr.run_test(INC, "INC");
 			tr.run_test(SUM, "SUM");
 			tr.run_test(MOV, "MOV");
+			tr.run_test(RSTA, "RSTA");
+			tr.run_test(INCA, "INCA");
+			tr.run_test(ADDA, "ADDA");
 		}
 	}
 	
