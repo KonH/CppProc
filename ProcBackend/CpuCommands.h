@@ -53,13 +53,17 @@ namespace Logics {
 		}
 
 	private:
+        #define HANDLER_0(func) { 0, [](auto c, const auto& x, const auto& y) { c.func();  } }
+        #define HANDLER_1(func) { 1, [](auto c, const auto& x, const auto& y) { c.func(x); } }
+        #define HANDLER_2(func) { 2, [](auto c, const auto& x, const auto& y) { c.func(x, y); } }
+        
 		map<unsigned long, Handler> _commands = {
-			{ 0b0000, { 0, [](auto c, const auto& x, const auto& y) { c.NOOP();    } } }, // NOOP _ _ => no operation, just bump IP & inc Counter
-			{ 0b0001, { 0, [](auto c, const auto& x, const auto& y) { c.RST();     } } }, // RST  _ _ => set Terminated flag
-			{ 0b0010, { 1, [](auto c, const auto& x, const auto& y) { c.CLR(x);    } } }, // CLR  x _ => clear given common register (r[x])
-			{ 0b0011, { 1, [](auto c, const auto& x, const auto& y) { c.INC(x);    } } }, // INC  x _ => inc given common register
-			{ 0b0100, { 2, [](auto c, const auto& x, const auto& y) { c.SUM(x, y); } } }, // SUM  y x => r[y] + r[x] will be saved to AC
-			{ 0b0101, { 2, [](auto c, const auto& x, const auto& y) { c.MOV(x, y); } } }, // MOV  y x => move r[x] value to r[y]
+			{ 0b0000, HANDLER_0(NOOP) }, // NOOP _ _ => no operation, just bump IP & inc Counter
+			{ 0b0001, HANDLER_0(RST)  }, // RST  _ _ => set Terminated flag
+			{ 0b0010, HANDLER_1(CLR)  }, // CLR  x _ => clear given common register (r[x])
+			{ 0b0011, HANDLER_1(INC)  }, // INC  x _ => inc given common register
+			{ 0b0100, HANDLER_2(SUM)  }, // SUM  y x => r[y] + r[x] will be saved to AC
+			{ 0b0101, HANDLER_2(MOV)  }, // MOV  y x => move r[x] value to r[y]
 		};
 
 		void NOOP() {
