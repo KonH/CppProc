@@ -64,12 +64,13 @@ namespace Logics {
 			{ 0b0001, HANDLER_0 (RST)  }, // RST  _ _ => set Terminated flag
 			{ 0b0010, HANDLER_1 (CLR)  }, // CLR  x _ => clear given common register (r[x])
 			{ 0b0011, HANDLER_1 (INC)  }, // INC  x _ => increment given common register
-			{ 0b0100, HANDLER_2 (SUM)  }, // SUM  y x => r[y] + r[x] will be saved to AC
-			{ 0b0101, HANDLER_2 (MOV)  }, // MOV  y x => move r[x] value to r[y]
-            { 0b0110, HANDLER_0 (RSTA) }, // RSTA _ _ => clear AR register
-            { 0b0111, HANDLER_0 (INCA) }, // INCA _ _ => increment AR register
-            { 0b1000, HANDLER_1 (ADDA) }, // ADDA x _ => add r[x] to AR register
-			{ 0b1001, HANDLER_2N(LD)   }, // LD   y x => load data from ram by address at r[x] to r[y]
+			{ 0b0100, HANDLER_2 (SUM)  }, // SUM  x y => r[y] + r[x] will be saved to AC
+			{ 0b0101, HANDLER_2 (MOV)  }, // MOV  x y => move r[x] value to r[y]
+			{ 0b0110, HANDLER_0 (RSTA) }, // RSTA _ _ => clear AR register
+			{ 0b0111, HANDLER_0 (INCA) }, // INCA _ _ => increment AR register
+			{ 0b1000, HANDLER_1 (ADDA) }, // ADDA x _ => add r[x] to AR register
+			{ 0b1001, HANDLER_2N(LD)   }, // LD   x y => load data from ram by address at r[x] to r[y]
+			{ 0b1010, HANDLER_2 (ST)   }, // ST   x y => store data from r[x] to ram by address r[y]
 		};
         
         using CmdArg = const bitset<BS>&;
@@ -104,12 +105,10 @@ namespace Logics {
 
 		void MOV(CmdArg x, CmdArg y) {
 			Utils::log_line("CpuCommands.MOV(x = ", x, ", y = ", y, ")");
-			auto y_addr = _regs.get_CN(y);
-			auto y_value = _cpu[y_addr];
-			Utils::log_line("CpuCommands.MOV(r[", y_addr, "] = ", y_value, ") => ");
 			auto x_addr = _regs.get_CN(x);
-			_cpu.set_bits(x_addr, y_value);
-			Utils::log_line("CpuCommands.MOV(r[", x_addr, "])");
+			auto x_value = _cpu[x_addr];
+			auto y_addr = _regs.get_CN(y);
+			_cpu.set_bits(y_addr, x_value);
 		}
 
 		void RSTA() {
@@ -131,17 +130,24 @@ namespace Logics {
 			switch (step) {
 				case 0:
 					Utils::log_line("CpuCommands.LD_0(", x, ", ", y, ")");
-					_logics.request_ram_read(Reference<BS>(y.to_ulong()));
+					_logics.request_ram_read(Reference<BS>(x.to_ulong()));
 					return false;
 					
 				case 1:
 					Utils::log_line("CpuCommands.LD_1(", x, ", ", y, ")");
 					auto value = _logics.read_data_bus();
 					Utils::log_line("CpuCommands.LD_1: readed value: ", value);
-					_cpu.set_bits(_regs.get_CN(x), value);
+					_cpu.set_bits(_regs.get_CN(y), value);
 					return true;
 			}
 			return true;
+		}
+		
+		void ST(CmdArg x, CmdArg y) {
+			Utils::log_line("CpuCommands.ST(", x, ", ", y, ")");
+			auto value = _cpu[_regs.get_CN(x)];
+			auto addr = Reference<BS>(y.to_ulong());
+			_logics.request_ram_write(addr, value);
 		}
 
 	private:

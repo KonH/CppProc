@@ -59,13 +59,13 @@ namespace Logics {
 		
 		void process_read(bitset<BS> address) {
 			Utils::log_line("RamRunner.process_read(", address, ")");
-			auto value = _ram[Reference<BS>(address.to_ulong())];
+			auto value = _ram[Reference<BS>(address.to_ulong() * BS)];
 			_data_bus.set_bits(Reference<BS>(0), value);
 		}
 
 		void process_write(bitset<BS> address, bitset<BS> data) {
 			Utils::log_line("RamRunner.process_write(", address, ", ", data, ")");
-			_ram.set_bits(Reference<BS>(address.to_ulong()), data);
+			_ram.set_bits(Reference<BS>(address.to_ulong() * BS), data);
 		}
 	};
 }

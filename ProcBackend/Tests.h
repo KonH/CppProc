@@ -350,18 +350,23 @@ namespace Tests {
 		}
 		
 		void MOV() {
-			// MOV y x => move r[x] value to r[y]
-			// x = 0, y = 1
-			// MOV 0001 0000
+			// MOV  x    y
+			// 0101 0001 0000
+			// c[x] = c[1]
+			// c[y] = c[0]
+			// c[1] => c[0]
+			// initial: c[0] = 0, c[1] = 1
+			// expected: c[0] = 1
+			
 			auto cmp = Computer<4, 32 + 4 * 2, 12>(0b000000010101);
 			auto c0 = cmp.Registers.get_CN(0);
 			auto c1 = cmp.Registers.get_CN(1);
-			cmp.State.CPU.set_bits(c0, BitUtils::get_one<4>());
-			auto c1_before = cmp.State.CPU[c1];
-			assert_equal(c1_before, BitUtils::get_zero<4>());
+			cmp.State.CPU.set_bits(c1, BitUtils::get_one<4>());
+			auto c0_before = cmp.State.CPU[c0];
+			assert_equal(c0_before, BitUtils::get_zero<4>());
 			cmp.tick(5); // fetch, decode, read 1, read 2, execute
-			auto c1_after = cmp.State.CPU[c1];
-			assert_equal(c1_after, BitUtils::get_one<4>());
+			auto c0_after = cmp.State.CPU[c0];
+			assert_equal(c0_after, BitUtils::get_one<4>());
 		}
 		
 		void RSTA() {
@@ -406,11 +411,14 @@ namespace Tests {
 		}
 		
 		void LD() {
-			// LD    x(r) y(m) m
-			// 10001 0001 0010 0110
-			// y(r) - register index to save
-			// x(m) - memory address to read
-			auto cmp = Computer<4, 32 + 8, 12 + 4>(0b0110001000011001);
+			// desc: LD   x    y    mem
+			// addr: 0000 0001 0010 0011
+			// data: 1001 0011 0001 0110
+			// x - address in ram
+			// y - register to save
+			// expected: read mem at 0011 (0110) to r[1]
+			
+			auto cmp = Computer<4, 32 + 8, 12 + 4>(0b0110000100111001);
 			auto c1 = cmp.Registers.get_CN(1);
 			
 			auto before = cmp.State.CPU[c1];
@@ -422,11 +430,38 @@ namespace Tests {
 			assert_equal(after, bitset<4>(0b0110));
 		}
 		
+		void ST() {
+			// desc: ST   x    y    mem
+			// addr: 0000 0001 0010 0011
+			// data: 1010 0001 0011 0000
+			// c[1] = 0110
+			// expected: write from c[1] to mem at y
+			
+			auto cmp = Computer<4, 32 + 8, 12 + 4>(0b0000001100011010);
+			auto c1 = cmp.Registers.get_CN(1);
+			cmp.State.CPU.set_bits(c1, bitset<4>(0b0110));
+			
+			auto mem_at_12 = Reference<4>(12);
+			auto before = cmp.State.RAM[mem_at_12];
+			assert_equal(before, BitUtils::get_zero<4>());
+			
+			cmp.tick(5); // fetch, decode, read 1, read 2, execute
+			
+			auto not_commited = cmp.State.RAM[mem_at_12];
+			assert_equal(not_commited, BitUtils::get_zero<4>());
+			
+			cmp.tick_ram();
+			
+			auto after = cmp.State.RAM[mem_at_12];
+			assert_equal(after, bitset<4>(0b0110));
+		}
+		
 		void test() {
 			TestRunner tr("commands");
 			tr.run_test(unknown, "unknown");
 			tr.run_test(NOOP, "NOOP");
 			tr.run_test(RST, "RST");
+			Utils::enable_log();
 			tr.run_test(CLR, "CLR");
 			tr.run_test(INC, "INC");
 			tr.run_test(SUM, "SUM");
@@ -435,6 +470,7 @@ namespace Tests {
 			tr.run_test(INCA, "INCA");
 			tr.run_test(ADDA, "ADDA");
 			tr.run_test(LD, "LD");
+			tr.run_test(ST, "ST");
 		}
 	}
 	

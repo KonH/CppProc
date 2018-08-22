@@ -116,7 +116,7 @@ namespace Logics {
 				else {
 					set_next_step(0b010, args > 1); // read #1
 					auto ip = _cpu[_regs.IP];
-					_logics.request_ram_read(ip.to_ulong() + BS);
+					_logics.request_ram_read(ip.to_ulong() + 1);
 				}
 			} else {
 				raise_fatal();
@@ -126,11 +126,12 @@ namespace Logics {
 		void tick_read_1() {
 			Utils::log_line("CpuRunner.tick_read_1");
 			auto arg1 = _logics.read_data_bus();
+			Utils::log_line("CpuRunner.tick_read_1: x = ", arg1);
 			_cpu.set_bits(Reference<BS>(_regs.Arg1), arg1);
 			if (_cpu[_regs.ArgumentMode].test(0)) {
 				set_next_step(0b011); // read #2
 				auto ip = _cpu[_regs.IP];
-				_logics.request_ram_read(ip.to_ulong() + BS * 2);
+				_logics.request_ram_read(ip.to_ulong() + 2);
 			} else {
 				set_next_step(0b100); // execute
 			}
@@ -139,6 +140,7 @@ namespace Logics {
 		void tick_read_2() {
 			Utils::log_line("CpuRunner.tick_read_2");
 			auto arg2 = _logics.read_data_bus();
+			Utils::log_line("CpuRunner.tick_read_2: y = ", arg2);
 			_cpu.set_bits(Reference<BS>(_regs.Arg2), arg2);
 			_logics.inc_register(Reference<3>(_regs.PipelineState)); // execute
 		}
