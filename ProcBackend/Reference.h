@@ -1,8 +1,10 @@
 #pragma once
 
 #include <ostream>
+#include <string>
 
 using std::ostream;
+using std::string;
 
 namespace Core {
 	template<size_t SZ>
@@ -10,13 +12,17 @@ namespace Core {
 	public:
 		const size_t Address;
 		const size_t Size = SZ;
+		const string FriendlyName;
 
-		Reference(size_t address = 0): Address(address) {}
+		Reference(size_t address = 0, const string& name = ""): Address(address), FriendlyName(name) {}
 	};
 	
 	template<size_t SZ>
 	ostream& operator <<(ostream& os, const Reference<SZ>& ref) {
 		os << ref.Address << ":" << SZ;
+		if ( !ref.FriendlyName.empty() ) {
+			os << " (" << ref.FriendlyName << ")";
+		}
 		return os;
 	}
 	

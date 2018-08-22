@@ -350,7 +350,7 @@ namespace Tests {
 			// MOV y x => move r[x] value to r[y]
 			// x = 0, y = 1
 			// MOV 0001 0000
-			auto cmp = Computer<4, 32 + 4 * 2, 12>(0b000100000101);
+			auto cmp = Computer<4, 32 + 4 * 2, 12>(0b000000010101);
 			auto c0 = cmp.Registers.get_CN(0);
 			auto c1 = cmp.Registers.get_CN(1);
 			cmp.State.CPU.set_bits(c0, BitUtils::get_one<4>());

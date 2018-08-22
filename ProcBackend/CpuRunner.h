@@ -146,7 +146,7 @@ namespace Logics {
 		void tick_execute() {
 			Utils::log_line("CpuRunner.tick_execute");
 			if (auto [has_handler, handler] = get_cur_handler(); has_handler) {
-				auto[y, x] = read_args();
+				auto[x, y] = read_args();
 				handler.Func(_commands, x, y);
 				if (!is_terminated()) {
 					set_next_operation(1 + handler.Arguments);
