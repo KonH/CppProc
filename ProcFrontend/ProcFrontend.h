@@ -8,7 +8,6 @@
 
 #include "View.h"
 
-const size_t BaseSize           = 4;
 const size_t InternalMemorySize = 40;
 const size_t RamMemorySize      = 64;
 
@@ -44,7 +43,7 @@ namespace ProcFrontend {
 			cout << "End of file." << endl;
 			cout << endl;
 			cout << "Readed memory: " << endl;
-			View::print_memory<4, RamMemorySize>(set, 4);
+			View::print_memory<RamMemorySize>(set, 4);
 			cout << endl;
 			f.close();
 		} else {
@@ -80,7 +79,7 @@ namespace ProcFrontend {
 		}
 		
 		auto ram_mem = read_ram();
-		auto comp = Computer<BaseSize, InternalMemorySize, RamMemorySize>(ram_mem);
+		auto comp = Computer<InternalMemorySize, RamMemorySize>(ram_mem);
 		
 		cout << "Start execution..." << endl;
 		cout << endl;

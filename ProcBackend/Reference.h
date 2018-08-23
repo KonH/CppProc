@@ -1,10 +1,12 @@
 #pragma once
 
-#include <ostream>
 #include <string>
+#include <ostream>
 
-using std::ostream;
+#include "Architecture.h"
+
 using std::string;
+using std::ostream;
 
 namespace Core {
 	template<size_t SZ>
@@ -16,6 +18,11 @@ namespace Core {
 
 		Reference(size_t address = 0, const string& name = ""): Address(address), FriendlyName(name) {}
 	};
+	
+	using FReference  = Reference<1>; // Flag reference
+	using PSReference = Reference<3>; // Pipeline state reference
+	using WReference  = Reference<Architecture::WORD_SIZE>;
+	using CBReference = Reference<Architecture::CONTROL_BUS_SIZE>;
 	
 	template<size_t SZ>
 	ostream& operator <<(ostream& os, const Reference<SZ>& ref) {

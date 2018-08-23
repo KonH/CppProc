@@ -15,10 +15,10 @@ using State::ComputerState;
 using Architecture::RegisterSet;
 
 namespace Core {
-	template<size_t BaseSize, size_t InternalMemorySize, size_t RamMemorySize>
+	template<size_t InternalMemorySize, size_t RamMemorySize>
 	class Computer {
-		using Regs      = RegisterSet  <BaseSize, InternalMemorySize>;
-		using CompState = ComputerState<BaseSize, InternalMemorySize, RamMemorySize>;
+		using Regs      = RegisterSet  <InternalMemorySize>;
+		using CompState = ComputerState<InternalMemorySize, RamMemorySize>;
 	public:
 		Regs Registers;
 		CompState State;
@@ -44,7 +44,7 @@ namespace Core {
 			auto& address = State.AddressBus;
 			auto& data    = State.DataBus;
 			auto& ram     = State.RAM;
-			return RamRunner<BaseSize, RamMemorySize>(control, address, data, ram).tick();
+			return RamRunner<RamMemorySize>(control, address, data, ram).tick();
 		}
 
 		bool tick_cpu() {
@@ -52,7 +52,7 @@ namespace Core {
 			auto& address = State.AddressBus;
 			auto& data    = State.DataBus;
 			auto& cpu     = State.CPU;
-			return CpuRunner<BaseSize, InternalMemorySize, RamMemorySize>(Registers, cpu, control, address, data).tick();
+			return CpuRunner<InternalMemorySize, RamMemorySize>(Registers, cpu, control, address, data).tick();
 		}
 	};
 }

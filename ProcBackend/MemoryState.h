@@ -6,6 +6,7 @@
 #include "Logger.h"
 #include "BitUtils.h"
 #include "Reference.h"
+#include "Architecture.h"
 
 using std::bitset;
 using std::string_view;
@@ -52,4 +53,8 @@ namespace State {
 			return result;
 		}
 	};
+	
+	using ControlBusState = MemoryState<Architecture::CONTROL_BUS_SIZE>;
+	using AddressBusState = MemoryState<Architecture::ADDR_BUS_SIZE>;
+	using DataBusState    = MemoryState<Architecture::DATA_BUS_SIZE>;
 }

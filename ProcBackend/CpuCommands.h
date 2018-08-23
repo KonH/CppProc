@@ -19,15 +19,15 @@ using State::MemoryState;
 using Architecture::RegisterSet;
 
 namespace Logics {
-	template<size_t BS, size_t IMS>
+	template<size_t IMS>
 	class CpuCommands {
-		using Regs     = const RegisterSet<BS, IMS>&;
+		using Regs     = const RegisterSet<IMS>&;
 		using CpuMem   = MemoryState<IMS>&;
-		using CpuLogic = CpuLogics<BS, IMS>&;
+		using CpuLogic = CpuLogics<IMS>&;
 		
 	public:
 		using HandlerFunc =
-			function<bool(CpuCommands, const int step, const bitset<BS>&, const bitset<BS>&)>;
+			function<bool(CpuCommands, const int step, const Word&, const Word&)>;
 
 		class Handler {
 		public:
@@ -39,7 +39,7 @@ namespace Logics {
 
 		CpuCommands(Regs regs, CpuMem cpu, CpuLogic logics): _regs(regs), _cpu(cpu), _logics(logics) {}
 	
-		tuple<bool, Handler> get_handler(const bitset<BS>& command_code) {
+		tuple<bool, Handler> get_handler(const Word& command_code) {
 			auto code_value = command_code.to_ulong();
 			auto cmd_iter = _commands.find(code_value);
 			if (cmd_iter != _commands.end()) {
@@ -77,7 +77,7 @@ namespace Logics {
 			{ 0b1111, HANDLER_0 (DECA) }, // DECA _ _ => AR = AR - 1
 		};
         
-        using CmdArg = const bitset<BS>&;
+        using CmdArg = const Word&;
 
 		void NOOP() {
 			Utils::log_line("CpuCommands.NOOP");
@@ -90,7 +90,7 @@ namespace Logics {
 
 		void CLR(CmdArg x) {
 			Utils::log_line("CpuCommands.CLR(x = ", x, ")");
-			_cpu.set_bits(_regs.get_CN(x), BitUtils::get_zero<BS>());
+			_cpu.set_bits(_regs.get_CN(x), BitUtils::get_zero());
 		}
 
 		void INC(CmdArg x) {
@@ -134,7 +134,7 @@ namespace Logics {
 			switch (step) {
 				case 0:
 					Utils::log_line("CpuCommands.LD_0(", x, ", ", y, ")");
-					_logics.request_ram_read(Reference<BS>(x.to_ulong()));
+					_logics.request_ram_read(WReference(x.to_ulong()));
 					return false;
 					
 				case 1:
@@ -150,7 +150,7 @@ namespace Logics {
 		void ST(CmdArg x, CmdArg y) {
 			Utils::log_line("CpuCommands.ST(", x, ", ", y, ")");
 			auto value = _cpu[_regs.get_CN(x)];
-			auto addr = Reference<BS>(y.to_ulong());
+			auto addr = WReference(y.to_ulong());
 			_logics.request_ram_write(addr, value);
 		}
 		

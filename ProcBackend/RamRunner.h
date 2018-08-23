@@ -3,18 +3,23 @@
 #include <bitset>
 
 #include "Logger.h"
+#include "Reference.h"
 #include "MemoryState.h"
+#include "Architecture.h"
 
 using std::bitset;
 
+using Core::FReference;
+using Core::WReference;
 using State::MemoryState;
+using Architecture::Word;
 
 namespace Logics {
-	template<size_t BS, size_t RMS>
+	template<size_t RMS>
 	class RamRunner {
-		using ControlBus = const MemoryState<2>&;
-		using AddrBus    = const MemoryState<BS>&;
-		using DataBus    = MemoryState<BS>&;
+		using ControlBus = const State::ControlBusState&;
+		using AddrBus    = const State::AddressBusState&;
+		using DataBus    = State::DataBusState&;
 		using Ram        = MemoryState<RMS>&;
 	public:
 		RamRunner(ControlBus control_bus, AddrBus address_bus, DataBus data_bus, Ram ram):
@@ -50,22 +55,22 @@ namespace Logics {
 		Ram         _ram;
 
 		bool is_enabled() {
-			return _control_bus[Reference<1>(0)].test(0);
+			return _control_bus[FReference(0)].test(0);
 		}
 		
 		bool is_write() {
-			return _control_bus[Reference<1>(1)].test(0);
+			return _control_bus[FReference(1)].test(0);
 		}
 		
-		void process_read(bitset<BS> address) {
+		void process_read(const Word& address) {
 			Utils::log_line("RamRunner.process_read(", address, ")");
-			auto value = _ram[Reference<BS>(address.to_ulong() * BS)];
-			_data_bus.set_bits(Reference<BS>(0), value);
+			auto value = _ram[WReference(address.to_ulong() * Architecture::WORD_SIZE)];
+			_data_bus.set_bits(WReference(0), value);
 		}
 
-		void process_write(bitset<BS> address, bitset<BS> data) {
+		void process_write(const Word& address, const Word& data) {
 			Utils::log_line("RamRunner.process_write(", address, ", ", data, ")");
-			_ram.set_bits(Reference<BS>(address.to_ulong() * BS), data);
+			_ram.set_bits(WReference(address.to_ulong() * Architecture::WORD_SIZE), data);
 		}
 	};
 }

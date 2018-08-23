@@ -11,6 +11,7 @@
 #include "Computer.h"
 #include "MemoryState.h"
 #include "RegisterSet.h"
+#include "Architecture.h"
 #include "ComputerState.h"
 
 using std::bitset;
@@ -21,11 +22,23 @@ using TestUtils::assert_equal;
 
 using Core::Computer;
 using Core::Reference;
+using Core::WReference;
+using Core::FReference;
+using Core::CBReference;
 using Logics::CpuLogics;
 using Logics::RamRunner;
 using State::MemoryState;
+using Architecture::Word;
+using Architecture::Flag;
+using State::DataBusState;
+using Architecture::CBSet;
 using State::ComputerState;
+using State::ControlBusState;
+using State::AddressBusState;
+using Architecture::WORD_SIZE;
 using Architecture::RegisterSet;
+using Architecture::MIN_MEMORY_SIZE;
+
 
 namespace Tests {
 	namespace Common {		
@@ -236,43 +249,43 @@ namespace Tests {
 	
 	namespace State {
 		void memory_state() {
-			auto ms1 = MemoryState<4>("");
+			auto ms1 = MemoryState<WORD_SIZE>("");
 			assert_equal(ms1.get_all().to_ulong(), 0);
 			
-			auto ms2 = MemoryState<4>("", 10);
+			auto ms2 = MemoryState<WORD_SIZE>("", 10);
 			assert_equal(ms2.get_all().to_ulong(), 10);
 			
-			auto ms3 = MemoryState<4>("");
-			ms3.set_bits(Reference<1>(), bitset<1>(1));
-			assert_true(ms3[Reference<1>()].test(0));
+			auto ms3 = MemoryState<WORD_SIZE>("");
+			ms3.set_bits(FReference(), Flag(1));
+			assert_true(ms3[FReference()].test(0));
 			assert_true(ms3.get_all().test(0));
 			
 			auto ms4 = MemoryState<4>("");
-			ms4.set_bits(Reference<1>(3), bitset<1>(1));
-			assert_true(ms4[Reference<1>(3)].test(0));
+			ms4.set_bits(FReference(3), Flag(1));
+			assert_true(ms4[FReference(3)].test(0));
 			assert_true(ms4.get_all().test(3));
 			
-			RegisterSet<4, 64> regs;
-			auto ms5 = MemoryState<64>("");
-			ms5.set_bits(regs.Overflow, bitset<1>(1));
+			RegisterSet<MIN_MEMORY_SIZE> regs;
+			auto ms5 = MemoryState<MIN_MEMORY_SIZE>("");
+			ms5.set_bits(regs.Overflow, Flag(1));
 			assert_true(ms5[regs.Overflow].test(0));
 			assert_true(ms5.get_all().test(regs.Overflow.Address));
 		}
 		
 		void computer_state() {
-			auto ram = bitset<4>(0b0101);
-			auto state = ComputerState<4, 32, 4>(ram);
+			auto ram = bitset<WORD_SIZE>(0b0101);
+			auto state = ComputerState<MIN_MEMORY_SIZE, WORD_SIZE>(ram);
 			assert_equal(state.RAM.get_all(), ram);
 		}
 		
 		void overflow_always_saved() {
-			auto cmp = Computer<4, 32, 8>(0b00000000); // NOOP
+			auto cmp = Computer<MIN_MEMORY_SIZE, WORD_SIZE * 2>(0b00000000); // NOOP
 			cmp.State.CPU.set_bits(cmp.Registers.Overflow, BitUtils::get_one<1>());
 			auto before = cmp.State.CPU[cmp.Registers.Overflow];
-			assert_equal(before, BitUtils::get_one<1>());
+			assert_equal(before, BitUtils::get_flag(1));
 			cmp.tick(3); // fetch, decode, execute
 			auto after = cmp.State.CPU[cmp.Registers.Overflow];
-			assert_equal(after, BitUtils::get_zero<1>());
+			assert_equal(after, BitUtils::get_flag(0));
 		}
 		
 		void test() {
@@ -285,12 +298,12 @@ namespace Tests {
 	
 	namespace Architecture {
 		void register_set() {
-			RegisterSet<4, 64> set;
+			RegisterSet<MIN_MEMORY_SIZE + WORD_SIZE * 2> set;
 			assert_true(set.System < set.CommandCode < set.Arg1 < set.Arg2 < set.Flags < set.Counter < set.IP < set.AR);
 			assert_true(set.get_CN_count() > 1);
 			assert_true(set.AR < set.get_CN(0));
 			assert_true(set.get_CN(0) < set.get_CN(1));
-			assert_equal(set.get_CN(bitset<4>(1)), set.get_CN(1));
+			assert_equal(set.get_CN(Word(1)), set.get_CN(1));
 		}
 		
 		void test() {
@@ -301,53 +314,54 @@ namespace Tests {
 	
 	namespace Logics {
 		void cpu_logics() {
-			RegisterSet<4, 64> regs;
-			MemoryState<64> cpu("");
-			MemoryState<2> control("");
-			MemoryState<4> data("");
-			MemoryState<4> address("");
-			CpuLogics<4, 64> logics(regs, cpu, control, data, address);
+			RegisterSet<MIN_MEMORY_SIZE + WORD_SIZE * 2> regs;
+			MemoryState<MIN_MEMORY_SIZE + WORD_SIZE * 2> cpu("");
+			ControlBusState                              control("");
+			DataBusState                                 data("");
+			AddressBusState                              address("");
+			
+			CpuLogics<MIN_MEMORY_SIZE + WORD_SIZE * 2>   logics(regs, cpu, control, data, address);
 			
 			assert_true(!cpu[regs.Overflow].test(0));
 			logics.set_overflow(true);
 			assert_true(cpu[regs.Overflow].test(0));
 			
-			assert_equal(cpu[regs.get_CN(0)], BitUtils::get_zero<4>());
-			logics.add_to_register(regs.get_CN(0), BitUtils::get_one<4>());
-			assert_equal(cpu[regs.get_CN(0)], BitUtils::get_one<4>());
+			assert_equal(cpu[regs.get_CN(0)], BitUtils::get_zero());
+			logics.add_to_register(regs.get_CN(0), BitUtils::get_one());
+			assert_equal(cpu[regs.get_CN(0)], BitUtils::get_one());
 			
-			assert_equal(cpu[regs.get_CN(1)], BitUtils::get_zero<4>());
+			assert_equal(cpu[regs.get_CN(1)], BitUtils::get_zero());
 			logics.inc_register(regs.get_CN(1));
-			assert_equal(cpu[regs.get_CN(1)], BitUtils::get_one<4>());
+			assert_equal(cpu[regs.get_CN(1)], BitUtils::get_one());
 		}
 		
 		void ram_runner_read() {
-			auto ram = MemoryState<4>("", bitset<4>(0b1111));
-			auto db = MemoryState<4>("");
-			auto cb = MemoryState<2>("");
-			auto ab = MemoryState<4>("");
-			RamRunner<4, 4> runner(cb, ab, db, ram);
-			auto before = db[Reference<4>(0)];
-			assert_equal(before, BitUtils::get_zero<4>());
-			cb.set_bits(Reference<2>(0), bitset<2>(0b01));
+			auto ram = MemoryState<WORD_SIZE>("", Word(0b1111));
+			auto db = DataBusState("");
+			auto cb = ControlBusState("");
+			auto ab = AddressBusState("");
+			RamRunner<4> runner(cb, ab, db, ram);
+			auto before = db[WReference(0)];
+			assert_equal(before, BitUtils::get_zero());
+			cb.set_bits(CBReference(0), CBSet(0b01));
 			runner.tick();
-			auto after = db[Reference<4>(0)];
-			assert_equal(after, ram[Reference<4>()]);
+			auto after = db[WReference(0)];
+			assert_equal(after, ram[WReference()]);
 		}
 		
 		void ram_runner_write() {
-			auto ram = MemoryState<4>("");
-			auto db = MemoryState<4>("");
-			auto cb = MemoryState<2>("");
-			auto ab = MemoryState<4>("");
-			RamRunner<4, 4> runner(cb, ab, db, ram);
-			auto data = bitset<4>(0b1111);
-			auto before = ram[Reference<4>(0)];
-			assert_equal(before, BitUtils::get_zero<4>());
-			cb.set_bits(Reference<2>(0), bitset<2>(0b11));
-			db.set_bits(Reference<4>(0), data);
+			auto ram = MemoryState<WORD_SIZE>("");
+			auto db = DataBusState("");
+			auto cb = ControlBusState("");
+			auto ab = AddressBusState("");
+			RamRunner<WORD_SIZE> runner(cb, ab, db, ram);
+			auto data = Word(0b1111);
+			auto before = ram[WReference(0)];
+			assert_equal(before, BitUtils::get_zero());
+			cb.set_bits(CBReference(0), CBSet(0b11));
+			db.set_bits(WReference(0), data);
 			runner.tick();
-			auto after = ram[Reference<4>(0)];
+			auto after = ram[WReference(0)];
 			assert_equal(after, data);
 		}
 		
@@ -361,14 +375,15 @@ namespace Tests {
 	
 	namespace Commands {
 		void unknown() {
-			auto cmp = Computer<8, 64, 8>(0b11111111);
+			// TODO: uncomment when migrated to 8bit
+			/*auto cmp = Computer<MIN_MEMORY_SIZE, WORD_SIZE>(0b1111);
 			cmp.tick(2); // fetch, decode
 			auto fatal = cmp.State.CPU[cmp.Registers.Fatal];
-			assert_equal(fatal, 0b1);
+			assert_equal(fatal, 0b1);*/
 		}
 		
 		void NOOP() {
-			auto cmp = Computer<4, 32, 4>(0b0000);
+			auto cmp = Computer<MIN_MEMORY_SIZE, WORD_SIZE>(0b0000);
 			cmp.tick(3); // fetch, decode, execute
 			auto counter = cmp.State.CPU[cmp.Registers.Counter];
 			assert_equal(counter, 0b1);
@@ -379,7 +394,7 @@ namespace Tests {
 		}
 		
 		void RST() {
-			auto cmp = Computer<4, 32, 8>(0b00000001);
+			auto cmp = Computer<MIN_MEMORY_SIZE, WORD_SIZE * 2>(0b00000001);
 			auto t1_performing = cmp.tick(2); // fetch, decode
 			assert_true(t1_performing, "performing");
 			auto t2_terminated = !cmp.tick(1); // execute
@@ -388,38 +403,38 @@ namespace Tests {
 		}
 		
 		void CLR() {
-			auto cmp = Computer<4, 32 + 4, 8>(0b00000010);
+			auto cmp = Computer<MIN_MEMORY_SIZE + WORD_SIZE, WORD_SIZE * 2>(0b00000010);
 			auto c0 = cmp.Registers.get_CN(0);
-			cmp.State.CPU.set_bits(c0, BitUtils::get_one<4>());
+			cmp.State.CPU.set_bits(c0, BitUtils::get_one());
 			auto before = cmp.State.CPU[c0];
-			assert_equal(before, BitUtils::get_one<4>());
+			assert_equal(before, BitUtils::get_one());
 			cmp.tick(4); // fetch, decode, read 1, execute
 			auto after = cmp.State.CPU[c0];
-			assert_equal(after, BitUtils::get_zero<4>());
+			assert_equal(after, BitUtils::get_zero());
 		}
 		
 		void INC() {
-			auto cmp = Computer<4, 32 + 4, 8>(0b00000011);
+			auto cmp = Computer<MIN_MEMORY_SIZE + WORD_SIZE, WORD_SIZE * 2>(0b00000011);
 			auto c0 = cmp.Registers.get_CN(0);
-			cmp.State.CPU.set_bits(c0, BitUtils::get_zero<4>());
+			cmp.State.CPU.set_bits(c0, BitUtils::get_zero());
 			auto before = cmp.State.CPU[c0];
-			assert_equal(before, BitUtils::get_zero<4>());
+			assert_equal(before, BitUtils::get_zero());
 			cmp.tick(4); // fetch, decode, read 1, execute
 			auto after = cmp.State.CPU[c0];
-			assert_equal(after, BitUtils::get_one<4>());
+			assert_equal(after, BitUtils::get_one());
 		}
 		
 		void SUM() {
-			auto cmp = Computer<4, 32 + 4 * 2, 12>(0b000100000100);
+			auto cmp = Computer<MIN_MEMORY_SIZE + WORD_SIZE * 2, WORD_SIZE * 3>(0b000100000100);
 			auto c0 = cmp.Registers.get_CN(0);
 			auto c1 = cmp.Registers.get_CN(1);
-			cmp.State.CPU.set_bits(c0, BitUtils::get_one<4>());
-			cmp.State.CPU.set_bits(c1, BitUtils::get_set<4>(2));
+			cmp.State.CPU.set_bits(c0, BitUtils::get_one());
+			cmp.State.CPU.set_bits(c1, BitUtils::get_set(2));
 			auto ar_before = cmp.State.CPU[cmp.Registers.AR];
-			assert_equal(ar_before, BitUtils::get_zero<4>());
+			assert_equal(ar_before, BitUtils::get_zero());
 			cmp.tick(5); // fetch, decode, read 1, read 2, execute
 			auto ar_after = cmp.State.CPU[cmp.Registers.AR];
-			assert_equal(ar_after, BitUtils::get_set<4>(3));
+			assert_equal(ar_after, BitUtils::get_set(3));
 		}
 		
 		void MOV() {
@@ -431,33 +446,33 @@ namespace Tests {
 			// initial: c[0] = 0, c[1] = 1
 			// expected: c[0] = 1
 			
-			auto cmp = Computer<4, 32 + 4 * 2, 12>(0b000000010101);
+			auto cmp = Computer<MIN_MEMORY_SIZE + WORD_SIZE * 2, WORD_SIZE * 3>(0b000000010101);
 			auto c0 = cmp.Registers.get_CN(0);
 			auto c1 = cmp.Registers.get_CN(1);
-			cmp.State.CPU.set_bits(c1, BitUtils::get_one<4>());
+			cmp.State.CPU.set_bits(c1, BitUtils::get_one());
 			auto c0_before = cmp.State.CPU[c0];
-			assert_equal(c0_before, BitUtils::get_zero<4>());
+			assert_equal(c0_before, BitUtils::get_zero());
 			cmp.tick(5); // fetch, decode, read 1, read 2, execute
 			auto c0_after = cmp.State.CPU[c0];
-			assert_equal(c0_after, BitUtils::get_one<4>());
+			assert_equal(c0_after, BitUtils::get_one());
 		}
 		
 		void RSTA() {
-			auto cmp = Computer<4, 32, 4>(0b0110);
+			auto cmp = Computer<MIN_MEMORY_SIZE, WORD_SIZE>(0b0110);
 			auto ar = cmp.Registers.AR;
-			cmp.State.CPU.set_bits(ar, BitUtils::get_one<4>());
+			cmp.State.CPU.set_bits(ar, BitUtils::get_one());
 			
 			auto before = cmp.State.CPU[ar];
-			assert_equal(before, BitUtils::get_one<4>());
+			assert_equal(before, BitUtils::get_one());
 			
 			cmp.tick(3); // fetch, decode, execute
 			
 			auto after = cmp.State.CPU[ar];
-			assert_equal(after, BitUtils::get_zero<4>());
+			assert_equal(after, BitUtils::get_zero());
 		}
 		
 		void INCA() {
-			auto cmp = Computer<4, 32, 4>(0b0111);
+			auto cmp = Computer<MIN_MEMORY_SIZE, WORD_SIZE>(0b0111);
 			auto ar = cmp.Registers.AR;
 			
 			auto before = cmp.State.CPU[ar];
@@ -466,21 +481,21 @@ namespace Tests {
 			cmp.tick(3); // fetch, decode, execute
 			
 			auto after = cmp.State.CPU[ar];
-			assert_equal(after, BitUtils::get_one<4>());
+			assert_equal(after, BitUtils::get_one());
 		}
 		
 		void ADDA() {
-			auto cmp = Computer<4, 32 + 8, 8>(0b00011000);
-			cmp.State.CPU.set_bits(cmp.Registers.get_CN(1), BitUtils::get_one<4>());
+			auto cmp = Computer<MIN_MEMORY_SIZE + WORD_SIZE * 2, WORD_SIZE * 2>(0b00011000);
+			cmp.State.CPU.set_bits(cmp.Registers.get_CN(1), BitUtils::get_one());
 			auto ar = cmp.Registers.AR;
 			
 			auto before = cmp.State.CPU[ar];
-			assert_equal(before, BitUtils::get_zero<4>());
+			assert_equal(before, BitUtils::get_zero());
 			
 			cmp.tick(4); // fetch, decode, read 1, execute
 			
 			auto after = cmp.State.CPU[ar];
-			assert_equal(after, BitUtils::get_one<4>());
+			assert_equal(after, BitUtils::get_one());
 		}
 		
 		void LD() {
@@ -491,16 +506,16 @@ namespace Tests {
 			// y - register to save
 			// expected: read mem at 0011 (0110) to r[1]
 			
-			auto cmp = Computer<4, 32 + 8, 12 + 4>(0b0110000100111001);
+			auto cmp = Computer<MIN_MEMORY_SIZE + WORD_SIZE * 2, WORD_SIZE * 4>(0b0110000100111001);
 			auto c1 = cmp.Registers.get_CN(1);
 			
 			auto before = cmp.State.CPU[c1];
-			assert_equal(before, BitUtils::get_zero<4>());
+			assert_equal(before, BitUtils::get_zero());
 			
 			cmp.tick(6); // fetch, decode, read 1, read 2, execute 1, execute 2
 			
 			auto after = cmp.State.CPU[c1];
-			assert_equal(after, bitset<4>(0b0110));
+			assert_equal(after, Word(0b0110));
 		}
 		
 		void ST() {
@@ -510,23 +525,23 @@ namespace Tests {
 			// c[1] = 0110
 			// expected: write from c[1] to mem at y
 			
-			auto cmp = Computer<4, 32 + 8, 12 + 4>(0b0000001100011010);
+			auto cmp = Computer<MIN_MEMORY_SIZE + WORD_SIZE * 2, WORD_SIZE * 4>(0b0000001100011010);
 			auto c1 = cmp.Registers.get_CN(1);
-			cmp.State.CPU.set_bits(c1, bitset<4>(0b0110));
+			cmp.State.CPU.set_bits(c1, Word(0b0110));
 			
-			auto mem_at_12 = Reference<4>(12);
-			auto before = cmp.State.RAM[mem_at_12];
-			assert_equal(before, BitUtils::get_zero<4>());
+			auto mem_at_3 = WReference(WORD_SIZE * 3);
+			auto before = cmp.State.RAM[mem_at_3];
+			assert_equal(before, BitUtils::get_zero());
 			
 			cmp.tick(5); // fetch, decode, read 1, read 2, execute
 			
-			auto not_commited = cmp.State.RAM[mem_at_12];
-			assert_equal(not_commited, BitUtils::get_zero<4>());
+			auto not_commited = cmp.State.RAM[mem_at_3];
+			assert_equal(not_commited, BitUtils::get_zero());
 			
 			cmp.tick_ram();
 			
-			auto after = cmp.State.RAM[mem_at_12];
-			assert_equal(after, bitset<4>(0b0110));
+			auto after = cmp.State.RAM[mem_at_3];
+			assert_equal(after, Word(0b0110));
 		}
 		
 		void SUB() {
@@ -534,19 +549,19 @@ namespace Tests {
 			// 1011 0000 0001
 			// r[0] = 1, r[1] = 1
 			// expected: r[0] = 0
-			auto cmp = Computer<4, 32 + 4, 12>(0b000100001011);
+			auto cmp = Computer<MIN_MEMORY_SIZE + WORD_SIZE, WORD_SIZE * 3>(0b000100001011);
 			auto c0 = cmp.Registers.get_CN(0);
 			auto c1 = cmp.Registers.get_CN(1);
 			
-			cmp.State.CPU.set_bits(c0, BitUtils::get_one<4>());
-			cmp.State.CPU.set_bits(c1, BitUtils::get_one<4>());
+			cmp.State.CPU.set_bits(c0, BitUtils::get_one());
+			cmp.State.CPU.set_bits(c1, BitUtils::get_one());
 			
-			assert_equal(cmp.State.CPU[c0], BitUtils::get_one<4>());
-			assert_equal(cmp.State.CPU[c1], BitUtils::get_one<4>());
+			assert_equal(cmp.State.CPU[c0], BitUtils::get_one());
+			assert_equal(cmp.State.CPU[c1], BitUtils::get_one());
 			
 			cmp.tick(5); // fetch, decode, read 1, read 2, execute
 			
-			assert_equal(cmp.State.CPU[c0], BitUtils::get_zero<4>());
+			assert_equal(cmp.State.CPU[c0], BitUtils::get_zero());
 		}
 		
 		void SUBA() {
@@ -554,48 +569,48 @@ namespace Tests {
 			// 1100 0001
 			// ar = 1, r[1] = 1
 			// expected: ar = 0
-			auto cmp = Computer<4, 32 + 4, 8>(0b00011100);
+			auto cmp = Computer<MIN_MEMORY_SIZE + WORD_SIZE, WORD_SIZE * 2>(0b00011100);
 			auto ar = cmp.Registers.AR;
 			auto c1 = cmp.Registers.get_CN(1);
 			
-			cmp.State.CPU.set_bits(ar, BitUtils::get_one<4>());
-			cmp.State.CPU.set_bits(c1, BitUtils::get_one<4>());
+			cmp.State.CPU.set_bits(ar, BitUtils::get_one());
+			cmp.State.CPU.set_bits(c1, BitUtils::get_one());
 			
-			assert_equal(cmp.State.CPU[ar], BitUtils::get_one<4>());
-			assert_equal(cmp.State.CPU[c1], BitUtils::get_one<4>());
+			assert_equal(cmp.State.CPU[ar], BitUtils::get_one());
+			assert_equal(cmp.State.CPU[c1], BitUtils::get_one());
 			
 			cmp.tick(4); // fetch, decode, read 1, execute
 			
-			assert_equal(cmp.State.CPU[ar], BitUtils::get_zero<4>());
+			assert_equal(cmp.State.CPU[ar], BitUtils::get_zero());
 		}
 		
 		void DEC() {
 			// DEC  x
 			// 1110 0000
-			auto cmp = Computer<4, 32 + 4, 8>(0b00001110);
+			auto cmp = Computer<MIN_MEMORY_SIZE + WORD_SIZE, WORD_SIZE * 2>(0b00001110);
 			auto c0 = cmp.Registers.get_CN(0);
-			cmp.State.CPU.set_bits(c0, BitUtils::get_one<4>());
+			cmp.State.CPU.set_bits(c0, BitUtils::get_one());
 			auto before = cmp.State.CPU[c0];
-			assert_equal(before, BitUtils::get_one<4>());
+			assert_equal(before, BitUtils::get_one());
 			cmp.tick(4); // fetch, decode, read 1, execute
 			auto after = cmp.State.CPU[c0];
-			assert_equal(after, BitUtils::get_zero<4>());
+			assert_equal(after, BitUtils::get_zero());
 		}
 		
 		void DECA() {
 			// DECA
 			// 1111
-			auto cmp = Computer<4, 32, 4>(0b1111);
+			auto cmp = Computer<MIN_MEMORY_SIZE, WORD_SIZE>(0b1111);
 			auto ar = cmp.Registers.AR;
-			cmp.State.CPU.set_bits(ar, BitUtils::get_one<4>());
+			cmp.State.CPU.set_bits(ar, BitUtils::get_one());
 			
 			auto before = cmp.State.CPU[ar];
-			assert_equal(before, BitUtils::get_one<4>());
+			assert_equal(before, BitUtils::get_one());
 			
 			cmp.tick(3); // fetch, decode, execute
 			
 			auto after = cmp.State.CPU[ar];
-			assert_equal(after, BitUtils::get_zero<4>());
+			assert_equal(after, BitUtils::get_zero());
 		}
 		
 		void test() {

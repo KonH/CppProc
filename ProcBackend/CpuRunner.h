@@ -17,21 +17,25 @@ using std::tuple;
 using std::bitset;
 using std::function;
 
+using Core::FReference;
+using Core::WReference;
+using Core::PSReference;
+using Core::CBReference;
 using State::MemoryState;
 using Logics::CpuCommands;
 using Logics::CpuLogics;
 using Architecture::RegisterSet;
 
 namespace Logics {
-	template<size_t BS, size_t IMS, size_t RMS>
+	template<size_t IMS, size_t RMS>
 	class CpuRunner {
-		using Regs       = const RegisterSet<BS, IMS>&;
+		using Regs       = const RegisterSet<IMS>&;
 		using CpuMem     = MemoryState<IMS>&;
-		using ControlBus = MemoryState<2>&;
-		using AddrBus    = MemoryState<BS>&;
-		using DataBus    = MemoryState<BS>&;
-		using CpuLogic   = CpuLogics<BS, IMS>;
-		using CpuCommand = CpuCommands<BS, IMS>;
+		using ControlBus = State::ControlBusState&;
+		using AddrBus    = State::AddressBusState&;
+		using DataBus    = State::DataBusState&;
+		using CpuLogic   = CpuLogics<IMS>;
+		using CpuCommand = CpuCommands<IMS>;
 		
 		using PipelineStep =
 			function<void(CpuRunner*)>;
@@ -60,7 +64,7 @@ namespace Logics {
 				", data: ", _data.get_all(), ")"
 			);
 
-			_control.set_zero(Reference<2>(0));
+			_control.set_zero(CBReference(0));
 
 			if (is_terminated()) {
 				Utils::log_line("CpuRunner.tick: terminated.");
@@ -99,15 +103,15 @@ namespace Logics {
 			_cpu.set_zero(_regs.Arg1);
 			_cpu.set_zero(_regs.Arg2);
 			auto ip = _cpu[_regs.IP];
-			Reference<BS> command(ip.to_ulong());
+			WReference command(ip.to_ulong());
 			_logics.request_ram_read(command);
-			_logics.inc_register(Reference<3>(_regs.PipelineState));
+			_logics.inc_register(PSReference(_regs.PipelineState));
 		}
 
 		void tick_decode() {
 			Utils::log_line("CpuRunner.tick_decode");
-			auto code = _data[Reference<BS>(0)];
-			_cpu.set_bits(Reference<BS>(_regs.CommandCode), code);
+			auto code = _data[WReference(0)];
+			_cpu.set_bits(WReference(_regs.CommandCode), code);
 			if (auto [has_handler, handler] = get_cur_handler(); has_handler) {
 				auto args = handler.Arguments;
 				if (args == 0) {
@@ -127,7 +131,7 @@ namespace Logics {
 			Utils::log_line("CpuRunner.tick_read_1");
 			auto arg1 = _logics.read_data_bus();
 			Utils::log_line("CpuRunner.tick_read_1: x = ", arg1);
-			_cpu.set_bits(Reference<BS>(_regs.Arg1), arg1);
+			_cpu.set_bits(WReference(_regs.Arg1), arg1);
 			if (_cpu[_regs.ArgumentMode].test(0)) {
 				set_next_step(0b011); // read #2
 				auto ip = _cpu[_regs.IP];
@@ -141,8 +145,8 @@ namespace Logics {
 			Utils::log_line("CpuRunner.tick_read_2");
 			auto arg2 = _logics.read_data_bus();
 			Utils::log_line("CpuRunner.tick_read_2: y = ", arg2);
-			_cpu.set_bits(Reference<BS>(_regs.Arg2), arg2);
-			_logics.inc_register(Reference<3>(_regs.PipelineState)); // execute
+			_cpu.set_bits(WReference(_regs.Arg2), arg2);
+			_logics.inc_register(PSReference(_regs.PipelineState)); // execute
 		}
 
 		void tick_execute_1() {
@@ -154,7 +158,7 @@ namespace Logics {
 					if (is_done) {
 						set_next_operation(1 + handler.Arguments);
 					} else {
-						_logics.inc_register(Reference<3>(_regs.PipelineState)); // execute 2
+						_logics.inc_register(PSReference(_regs.PipelineState)); // execute 2
 					}
 				}
 			} else {
@@ -179,13 +183,13 @@ namespace Logics {
 
 		void set_next_step(int step) {
 			Utils::log_line("CpuRunner.set_next_step(", step, ")");
-			_cpu.set_bits(Reference<3>(_regs.PipelineState), BitUtils::get_set<3>(step));
+			_cpu.set_bits(PSReference(_regs.PipelineState), BitUtils::get_set<3>(step));
 		}
 
 		void set_next_step(int step, bool two_args) {
 			Utils::log_line("CpuRunner.set_next_step(", step, ", ", two_args, ")");
 			set_next_step(step);
-			_cpu.set_bits(Reference<1>(_regs.ArgumentMode), BitUtils::get_set<1>(two_args));
+			_cpu.set_bits(FReference(_regs.ArgumentMode), BitUtils::get_flag(two_args));
 		}
 
 		PipelineStep get_step(const bitset<3>& pipeline_state) {
@@ -214,8 +218,8 @@ namespace Logics {
 
 		void raise_fatal() {
 			Utils::log_line("CpuRunner.raise_fatal");
-			_cpu.set_bits(_regs.Fatal,      BitUtils::get_one<1>());
-			_cpu.set_bits(_regs.Terminated, BitUtils::get_one<1>());
+			_cpu.set_bits(_regs.Fatal,      BitUtils::get_flag(true));
+			_cpu.set_bits(_regs.Terminated, BitUtils::get_flag(true));
 		}
 
 		void inc_counter() {
@@ -225,7 +229,7 @@ namespace Logics {
 
 		void bump_ip(int size) {
 			Utils::log_line("CpuRunner.bump_ip(", size, ")");
-			auto overflow = _logics.add_to_register(_regs.IP, BitUtils::get_set<BS>(BS * size));
+			auto overflow = _logics.add_to_register(_regs.IP, BitUtils::get_set(Architecture::WORD_SIZE * size));
 			if (overflow) {
 				raise_fatal();
 			}
