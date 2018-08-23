@@ -83,56 +83,126 @@ namespace Tests {
 			  
 			x = 0b1; y = 0b1; expected = { 0b0, true  };
 			assert_equal(BitUtils::plus<1>(x, y), expected, "1 + 1 = 0 (carry = 1)");
-		  }
+		}
 		  
-		  void bit_plus_advanced() {
-			  bitset<4> x;
-			  bitset<4> y;
-			  tuple<bitset<4>, bool> expected;
-			  
-			  x = 0b0001; y = 0b0010; expected = { 0b0011, false };
-			  assert_equal(BitUtils::plus(x, y), expected, "0001 + 0010 = 0011 (carry = 0)");
-			  
-			  x = 0b0001; y = 0b0001; expected = { 0b0010, false };
-			  assert_equal(BitUtils::plus(x, y), expected, "0001 + 0001 = 0010 (carry = 0)");
-			  
-			  x = 0b0011; y = 0b0011; expected = { 0b0110, false };
-			  assert_equal(BitUtils::plus(x, y), expected, "0011 + 0011 = 0110 (carry = 0)");
-			  
-			  x = 0b0110; y = 0b0011; expected = { 0b1001, false };
-			  assert_equal(BitUtils::plus(x, y), expected, "0110 + 0011 = 1001 (carry = 0)");
-			  
-			  x = 0b0010; y = 0b0110; expected = { 0b1000, false };
-			  assert_equal(BitUtils::plus(x, y), expected, "0010 + 0110 = 1000 (carry = 0)");
-			  
-			  x = 0b1000; y = 0b0111; expected = { 0b1111, false };
-			  assert_equal(BitUtils::plus(x, y), expected, "1000 + 0111 = 1111 (carry = 0)");
-			  
-			  x = 0b1000; y = 0b1000; expected = { 0b0000, true };
-			  assert_equal(BitUtils::plus(x, y), expected, "1000 + 1000 = 0000 (carry = 1)");
-			  
-			  x = 0b1000; y = 0b1111; expected = { 0b0111, true };
-			  assert_equal(BitUtils::plus(x, y), expected, "1000 + 1111 = 0111 (carry = 1)");
-			  
-			  x = 0b0001; y = 0b1111; expected = { 0b0000, true };
-			  assert_equal(BitUtils::plus(x, y), expected, "0001 + 1111 = 0000 (carry = 1)");
-		  }
-		  
-		  void bit_inc() {
-			  bitset<4> x;
-			  tuple<bitset<4>, bool> expected;
-			  
-			  auto one = BitUtils::get_one<4>();
-			  
-			  x = 0b0000; expected = { 0b0001, false };
-			  assert_equal(BitUtils::plus<4>(x, one), expected, "0000 + 0001 = 0001 (carry = 0)");
-			  
-			  x = 0b0001; expected = { 0b0010, false };
-			  assert_equal(BitUtils::plus<4>(x, one), expected, "0001 + 0001 = 0010 (carry = 0)");
-			  
-			  x = 0b1111; expected = { 0b0000, true };
-			  assert_equal(BitUtils::plus<4>(x, one), expected, "1111 + 0001 = 0000 (carry = 1)");
-		  }
+		void bit_plus_advanced() {
+			bitset<4> x;
+			bitset<4> y;
+			tuple<bitset<4>, bool> expected;
+
+			x = 0b0001; y = 0b0010; expected = { 0b0011, false };
+			assert_equal(BitUtils::plus(x, y), expected, "0001 + 0010 = 0011 (carry = 0)");
+
+			x = 0b0001; y = 0b0001; expected = { 0b0010, false };
+			assert_equal(BitUtils::plus(x, y), expected, "0001 + 0001 = 0010 (carry = 0)");
+
+			x = 0b0011; y = 0b0011; expected = { 0b0110, false };
+			assert_equal(BitUtils::plus(x, y), expected, "0011 + 0011 = 0110 (carry = 0)");
+
+			x = 0b0110; y = 0b0011; expected = { 0b1001, false };
+			assert_equal(BitUtils::plus(x, y), expected, "0110 + 0011 = 1001 (carry = 0)");
+
+			x = 0b0010; y = 0b0110; expected = { 0b1000, false };
+			assert_equal(BitUtils::plus(x, y), expected, "0010 + 0110 = 1000 (carry = 0)");
+
+			x = 0b1000; y = 0b0111; expected = { 0b1111, false };
+			assert_equal(BitUtils::plus(x, y), expected, "1000 + 0111 = 1111 (carry = 0)");
+
+			x = 0b1000; y = 0b1000; expected = { 0b0000, true };
+			assert_equal(BitUtils::plus(x, y), expected, "1000 + 1000 = 0000 (carry = 1)");
+
+			x = 0b1000; y = 0b1111; expected = { 0b0111, true };
+			assert_equal(BitUtils::plus(x, y), expected, "1000 + 1111 = 0111 (carry = 1)");
+
+			x = 0b0001; y = 0b1111; expected = { 0b0000, true };
+			assert_equal(BitUtils::plus(x, y), expected, "0001 + 1111 = 0000 (carry = 1)");
+		}
+		
+		void bit_inc() {
+			bitset<4> x;
+			tuple<bitset<4>, bool> expected;
+
+			auto one = BitUtils::get_one<4>();
+
+			x = 0b0000; expected = { 0b0001, false };
+			assert_equal(BitUtils::plus<4>(x, one), expected, "0000 + 0001 = 0001 (carry = 0)");
+
+			x = 0b0001; expected = { 0b0010, false };
+			assert_equal(BitUtils::plus<4>(x, one), expected, "0001 + 0001 = 0010 (carry = 0)");
+
+			x = 0b1111; expected = { 0b0000, true };
+			assert_equal(BitUtils::plus<4>(x, one), expected, "1111 + 0001 = 0000 (carry = 1)");
+		}
+
+		void bit_inverse() {
+			bitset<1> x1;
+			bitset<1> y1;
+			
+			x1 = 0b0; y1 = 0b1;
+			assert_equal(BitUtils::inverse<1>(x1), y1, "0 => 1");
+			
+			x1 = 0b1; y1 = 0b0;
+			assert_equal(BitUtils::inverse<1>(x1), y1, "1 => 0");
+			
+			bitset<4> x2;
+			bitset<4> y2;
+			
+			x2 = 0b0000; y2 = 0b1111;
+			assert_equal(BitUtils::inverse<4>(x2), y2, "0000 => 1111");
+			
+			x2 = 0b1111; y2 = 0b0000;
+			assert_equal(BitUtils::inverse<4>(x2), y2, "1111 => 0000");
+			
+			x2 = 0b1000; y2 = 0b0111;
+			assert_equal(BitUtils::inverse<4>(x2), y2, "1000 => 0111");
+			
+			x2 = 0b0111; y2 = 0b1000;
+			assert_equal(BitUtils::inverse<4>(x2), y2, "0111 => 1000");
+			
+		}
+		
+		void bit_minus_ordinary() {
+			bitset<1> x;
+			bitset<1> y;
+			tuple<bitset<1>, bool> actual;
+			tuple<bitset<1>, bool> expected;
+			
+			x = 0b0; y = 0b0; expected = { 0b0, false };
+			assert_equal(BitUtils::minus<1>(x, y), expected, "0 - 0 = 0 (carry = 0)");
+			
+			x = 0b0; y = 0b1; expected = { 0b1, true };
+			assert_equal(BitUtils::minus<1>(x, y), expected, "0 - 1 = 1 (carry = 1)");
+			
+			x = 0b1; y = 0b0; expected = { 0b1, false };
+			assert_equal(BitUtils::minus<1>(x, y), expected, "1 - 0 = 1 (carry = 0)");
+			
+			x = 0b1; y = 0b1; expected = { 0b0, false };
+			assert_equal(BitUtils::minus<1>(x, y), expected, "1 - 1 = 0 (carry = 0)");
+		}
+		
+		void bit_minus_advanced() {
+			bitset<4> x;
+			bitset<4> y;
+			tuple<bitset<4>, bool> actual;
+			tuple<bitset<4>, bool> expected;
+			
+			x = 0b1110; y = 0b0111; expected = { 0b0111, false };
+			assert_equal(BitUtils::minus<4>(x, y), expected, "1110 (14) - 0111 (7) = 0111 (7) (carry = 0)");
+			
+			for ( size_t i = 0; i <= 15; i++ ) {
+				for ( size_t j = 0; j <= i; j++ ) {
+					cout << endl;
+					x = BitUtils::get_set<4>(i);
+					y = BitUtils::get_set<4>(j);
+					auto actual = BitUtils::minus<4>(x, y);
+					auto expected = tuple { BitUtils::get_set<4>(i - j), false };
+					stringstream ss;
+					ss << std::to_string(i) << " (" << x << ") - " << std::to_string(j) << " (" << y << ") = ";
+					ss << (i - j) << " (" << std::get<0>(expected) << ")";
+					assert_equal(actual, expected, ss.str());
+				}
+			}
+		}
 		
 		void test() {
 			TestRunner tr("bit_utils");
@@ -143,6 +213,9 @@ namespace Tests {
 			tr.run_test(bit_plus_ordinary, "bit_plus_ordinary");
 			tr.run_test(bit_plus_advanced, "bit_plus_advanced");
 			tr.run_test(bit_inc, "bit_inc");
+			tr.run_test(bit_inverse, "bit_inverse");
+			tr.run_test(bit_minus_ordinary, "bit_minus_ordinary");
+			tr.run_test(bit_minus_advanced, "bit_minus_advanced");
 		}
 	}
 	
@@ -288,7 +361,7 @@ namespace Tests {
 	
 	namespace Commands {
 		void unknown() {
-			auto cmp = Computer<4, 32, 4>(0b1111);
+			auto cmp = Computer<8, 64, 8>(0b11111111);
 			cmp.tick(2); // fetch, decode
 			auto fatal = cmp.State.CPU[cmp.Registers.Fatal];
 			assert_equal(fatal, 0b1);
@@ -456,12 +529,80 @@ namespace Tests {
 			assert_equal(after, bitset<4>(0b0110));
 		}
 		
+		void SUB() {
+			// SUB  x    y
+			// 1011 0000 0001
+			// r[0] = 1, r[1] = 1
+			// expected: r[0] = 0
+			auto cmp = Computer<4, 32 + 4, 12>(0b000100001011);
+			auto c0 = cmp.Registers.get_CN(0);
+			auto c1 = cmp.Registers.get_CN(1);
+			
+			cmp.State.CPU.set_bits(c0, BitUtils::get_one<4>());
+			cmp.State.CPU.set_bits(c1, BitUtils::get_one<4>());
+			
+			assert_equal(cmp.State.CPU[c0], BitUtils::get_one<4>());
+			assert_equal(cmp.State.CPU[c1], BitUtils::get_one<4>());
+			
+			cmp.tick(5); // fetch, decode, read 1, read 2, execute
+			
+			assert_equal(cmp.State.CPU[c0], BitUtils::get_zero<4>());
+		}
+		
+		void SUBA() {
+			// SUBA x
+			// 1100 0001
+			// ar = 1, r[1] = 1
+			// expected: ar = 0
+			auto cmp = Computer<4, 32 + 4, 8>(0b00011100);
+			auto ar = cmp.Registers.AR;
+			auto c1 = cmp.Registers.get_CN(1);
+			
+			cmp.State.CPU.set_bits(ar, BitUtils::get_one<4>());
+			cmp.State.CPU.set_bits(c1, BitUtils::get_one<4>());
+			
+			assert_equal(cmp.State.CPU[ar], BitUtils::get_one<4>());
+			assert_equal(cmp.State.CPU[c1], BitUtils::get_one<4>());
+			
+			cmp.tick(4); // fetch, decode, read 1, execute
+			
+			assert_equal(cmp.State.CPU[ar], BitUtils::get_zero<4>());
+		}
+		
+		void DEC() {
+			// DEC  x
+			// 1110 0000
+			auto cmp = Computer<4, 32 + 4, 8>(0b00001110);
+			auto c0 = cmp.Registers.get_CN(0);
+			cmp.State.CPU.set_bits(c0, BitUtils::get_one<4>());
+			auto before = cmp.State.CPU[c0];
+			assert_equal(before, BitUtils::get_one<4>());
+			cmp.tick(4); // fetch, decode, read 1, execute
+			auto after = cmp.State.CPU[c0];
+			assert_equal(after, BitUtils::get_zero<4>());
+		}
+		
+		void DECA() {
+			// DECA
+			// 1111
+			auto cmp = Computer<4, 32, 4>(0b1111);
+			auto ar = cmp.Registers.AR;
+			cmp.State.CPU.set_bits(ar, BitUtils::get_one<4>());
+			
+			auto before = cmp.State.CPU[ar];
+			assert_equal(before, BitUtils::get_one<4>());
+			
+			cmp.tick(3); // fetch, decode, execute
+			
+			auto after = cmp.State.CPU[ar];
+			assert_equal(after, BitUtils::get_zero<4>());
+		}
+		
 		void test() {
 			TestRunner tr("commands");
 			tr.run_test(unknown, "unknown");
 			tr.run_test(NOOP, "NOOP");
 			tr.run_test(RST, "RST");
-			Utils::enable_log();
 			tr.run_test(CLR, "CLR");
 			tr.run_test(INC, "INC");
 			tr.run_test(SUM, "SUM");
@@ -471,6 +612,10 @@ namespace Tests {
 			tr.run_test(ADDA, "ADDA");
 			tr.run_test(LD, "LD");
 			tr.run_test(ST, "ST");
+			tr.run_test(SUB, "SUB");
+			tr.run_test(SUBA, "SUBA");
+			tr.run_test(DEC, "DEC");
+			tr.run_test(DECA, "DECA");
 		}
 	}
 	

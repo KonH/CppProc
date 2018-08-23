@@ -61,4 +61,33 @@ namespace BitUtils {
 		}
 		return tuple { result, prev_carry };
 	}
+	
+	template<size_t BS>
+	auto inverse(const bitset<BS>& value) {
+		static_assert(BS > 0);
+		bitset<BS> result = { 0 };
+		for ( size_t i = 0; i < BS; i++ ) {
+			result[i] = !value[i];
+		}
+		return result;
+	}
+	
+	auto minus(bool a, bool b, bool carry) {
+		auto result    = carry ? (a == b) : (a != b);
+		auto new_carry = b ? ((a == carry) || carry)  : (!a && carry);
+		return tuple { result, new_carry };
+	}
+	
+	template<size_t BS>
+	auto minus(const bitset<BS>& a, const bitset<BS>& b) {
+		static_assert(BS > 0);
+		bitset<BS> result = { 0 };
+		auto prev_carry = false;
+		for (size_t i = 0; i < BS; i++) {
+			auto [res, carry] = minus(a.test(i), b.test(i), prev_carry);
+			result[i] = res;
+			prev_carry = carry;
+		}
+		return tuple { result, prev_carry };
+	}
 }

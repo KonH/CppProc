@@ -34,11 +34,27 @@ namespace Logics {
 			set_overflow(overflow);
 			return overflow;
 		}
+		
+		template<size_t SZ>
+		bool sub_register(Reference<SZ> ref, const bitset<SZ>& value) {
+			Utils::log_line("CpuLogics.sub_register(", ref, ", ", value, ")");
+			auto old_value = _cpu[ref];
+			auto[new_value, overflow] = BitUtils::minus(old_value, value);
+			_cpu.set_bits(ref, new_value);
+			set_overflow(overflow);
+			return overflow;
+		}
 
 		template<size_t SZ>
 		bool inc_register(Reference<SZ> ref) {
 			Utils::log_line("CpuLogics.inc_register(", ref, ")");
 			return add_to_register(ref, BitUtils::get_one<SZ>());
+		}
+		
+		template<size_t SZ>
+		bool dec_register(Reference<SZ> ref) {
+			Utils::log_line("CpuLogics.dec_register(", ref, ")");
+			return sub_register(ref, BitUtils::get_one<SZ>());
 		}
 		
 		void request_ram_read(Reference<BS> address) {

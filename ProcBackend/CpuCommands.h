@@ -71,6 +71,10 @@ namespace Logics {
 			{ 0b1000, HANDLER_1 (ADDA) }, // ADDA x _ => add r[x] to AR register
 			{ 0b1001, HANDLER_2N(LD)   }, // LD   x y => load data from ram by address at r[x] to r[y]
 			{ 0b1010, HANDLER_2 (ST)   }, // ST   x y => store data from r[x] to ram by address r[y]
+			{ 0b1011, HANDLER_2 (SUB)  }, // SUB  x y => acc = r[x] - r[y]
+			{ 0b1100, HANDLER_1 (SUBA) }, // SUBA x _ => acc = acc - r[x]
+			{ 0b1110, HANDLER_1 (DEC)  }, // DEC  x _ => r[x] = r[x] - 1
+			{ 0b1111, HANDLER_0 (DECA) }, // DECA _ _ => AR = AR - 1
 		};
         
         using CmdArg = const bitset<BS>&;
@@ -148,6 +152,30 @@ namespace Logics {
 			auto value = _cpu[_regs.get_CN(x)];
 			auto addr = Reference<BS>(y.to_ulong());
 			_logics.request_ram_write(addr, value);
+		}
+		
+		void SUB(CmdArg x, CmdArg y) {
+			Utils::log_line("CpuCommands.SUB(", x, ", ", y, ")");
+			auto xref = _regs.get_CN(x);
+			auto y_value = _cpu[_regs.get_CN(y)];
+			_logics.sub_register(xref, y_value);
+		}
+		
+		void SUBA(CmdArg x) {
+			Utils::log_line("CpuCommands.SUBA(", x, ")");
+			auto xref = _regs.get_CN(x);
+			auto x_value = _cpu[xref];
+			_logics.sub_register(_regs.AR, x_value);
+		}
+		
+		void DEC(CmdArg x) {
+			Utils::log_line("CpuCommands.DEC(", x, ")");
+			_logics.dec_register(_regs.get_CN(x));
+		}
+		
+		void DECA() {
+			Utils::log_line("CpuCommands.DECA");
+			_logics.dec_register(_regs.AR);
 		}
 
 	private:
