@@ -19,6 +19,24 @@ using State::MemoryState;
 using Architecture::RegisterSet;
 
 namespace Logics {
+	enum Command {
+		NOOP = 0x00,
+		RST  = 0x01,
+		CLR  = 0x02,
+		INC  = 0x03,
+		SUM  = 0x04,
+		MOV  = 0x05,
+		RSTA = 0x06,
+		INCA = 0x07,
+		ADDA = 0x08,
+		LD   = 0x09,
+		ST   = 0x0A,
+		SUB  = 0x0B,
+		SUBA = 0x0C,
+		DEC  = 0x0D,
+		DECA = 0x0E,
+	};
+	
 	template<size_t IMS>
 	class CpuCommands {
 		using Regs     = const RegisterSet<IMS>&;
@@ -60,21 +78,21 @@ namespace Logics {
 		#define HANDLER_2N(func) { 2, [](auto c, const int step, const auto& x, const auto& y) { return c.func(step, x, y); } }
 		
 		map<unsigned long, Handler> _commands = {
-			{ 0b0000, HANDLER_0 (NOOP) }, // NOOP _ _ => no operation, just bump IP & inc Counter
-			{ 0b0001, HANDLER_0 (RST)  }, // RST  _ _ => set Terminated flag
-			{ 0b0010, HANDLER_1 (CLR)  }, // CLR  x _ => clear given common register (r[x])
-			{ 0b0011, HANDLER_1 (INC)  }, // INC  x _ => increment given common register
-			{ 0b0100, HANDLER_2 (SUM)  }, // SUM  x y => r[y] + r[x] will be saved to AC
-			{ 0b0101, HANDLER_2 (MOV)  }, // MOV  x y => move r[x] value to r[y]
-			{ 0b0110, HANDLER_0 (RSTA) }, // RSTA _ _ => clear AR register
-			{ 0b0111, HANDLER_0 (INCA) }, // INCA _ _ => increment AR register
-			{ 0b1000, HANDLER_1 (ADDA) }, // ADDA x _ => add r[x] to AR register
-			{ 0b1001, HANDLER_2N(LD)   }, // LD   x y => load data from ram by address at r[x] to r[y]
-			{ 0b1010, HANDLER_2 (ST)   }, // ST   x y => store data from r[x] to ram by address r[y]
-			{ 0b1011, HANDLER_2 (SUB)  }, // SUB  x y => acc = r[x] - r[y]
-			{ 0b1100, HANDLER_1 (SUBA) }, // SUBA x _ => acc = acc - r[x]
-			{ 0b1110, HANDLER_1 (DEC)  }, // DEC  x _ => r[x] = r[x] - 1
-			{ 0b1111, HANDLER_0 (DECA) }, // DECA _ _ => AR = AR - 1
+			{ Command::NOOP, HANDLER_0 (NOOP) }, // NOOP _ _ => no operation, just bump IP & inc Counter
+			{ Command::RST,  HANDLER_0 (RST)  }, // RST  _ _ => set Terminated flag
+			{ Command::CLR,  HANDLER_1 (CLR)  }, // CLR  x _ => clear given common register (r[x])
+			{ Command::INC,  HANDLER_1 (INC)  }, // INC  x _ => increment given common register
+			{ Command::SUM,  HANDLER_2 (SUM)  }, // SUM  x y => r[y] + r[x] will be saved to AC
+			{ Command::MOV,  HANDLER_2 (MOV)  }, // MOV  x y => move r[x] value to r[y]
+			{ Command::RSTA, HANDLER_0 (RSTA) }, // RSTA _ _ => clear AR register
+			{ Command::INCA, HANDLER_0 (INCA) }, // INCA _ _ => increment AR register
+			{ Command::ADDA, HANDLER_1 (ADDA) }, // ADDA x _ => add r[x] to AR register
+			{ Command::LD,   HANDLER_2N(LD)   }, // LD   x y => load data from ram by address at r[x] to r[y]
+			{ Command::ST,   HANDLER_2 (ST)   }, // ST   x y => store data from r[x] to ram by address r[y]
+			{ Command::SUB,  HANDLER_2 (SUB)  }, // SUB  x y => acc = r[x] - r[y]
+			{ Command::SUBA, HANDLER_1 (SUBA) }, // SUBA x _ => acc = acc - r[x]
+			{ Command::DEC,  HANDLER_1 (DEC)  }, // DEC  x _ => r[x] = r[x] - 1
+			{ Command::DECA, HANDLER_0 (DECA) }, // DECA _ _ => AR = AR - 1
 		};
         
         using CmdArg = const Word&;

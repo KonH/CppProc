@@ -56,11 +56,10 @@ namespace View {
 		print_register("AP", cpu[regs.AR]);
 
 		auto cn = regs.get_CN_count();
-		cout << "CN: " << cn << endl;
-		/*for (int i = 0; i < cn; i++) {
+		for (int i = 0; i < cn; i++) {
 			auto addr = Word(i);
 			print_register("C" + std::to_string(i), state.CPU[regs.get_CN(addr)]);
-		}*/
+		}
 	}
 
 	template<size_t IMS, size_t RMS>

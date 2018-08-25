@@ -93,7 +93,7 @@ namespace Architecture {
 		}
 		
 		auto get_CN(size_t index) const {
-			return get_register(SERVICE_REGISTERS + index * WORD_SIZE, "CR" + std::to_string(index));
+			return get_register(SERVICE_REGISTERS + index, "CR" + std::to_string(index));
 		}
 
 		constexpr size_t get_CN_count() const {

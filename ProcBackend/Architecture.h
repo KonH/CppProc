@@ -7,7 +7,7 @@ using std::array;
 using std::bitset;
 
 namespace Architecture {
-	const size_t WORD_SIZE        = 4;
+	const size_t WORD_SIZE        = 8;
 	const size_t CONTROL_BUS_SIZE = 2;
 	const size_t ADDR_BUS_SIZE    = WORD_SIZE;
 	const size_t DATA_BUS_SIZE    = WORD_SIZE;
