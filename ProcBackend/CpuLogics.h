@@ -11,8 +11,8 @@ using Core::WReference;
 using Core::CBReference;
 using State::MemoryState;
 using Architecture::Word;
-using Architecture::RegisterSet;
 using Architecture::WORD_SIZE;
+using Architecture::RegisterSet;
 
 namespace Logics {
 	template<size_t IMS>

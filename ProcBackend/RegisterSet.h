@@ -97,7 +97,7 @@ namespace Architecture {
 		}
 
 		constexpr size_t get_CN_count() const {
-			return (IMS - SERVICE_REGISTERS * WORD_SIZE) / WORD_SIZE;
+			return IMS - SERVICE_REGISTERS;
 		}
 
 		constexpr size_t get_address_at(size_t index) const {

@@ -56,10 +56,11 @@ namespace View {
 		print_register("AP", cpu[regs.AR]);
 
 		auto cn = regs.get_CN_count();
-		for (int i = 0; i < cn; i++) {
+		cout << "CN: " << cn << endl;
+		/*for (int i = 0; i < cn; i++) {
 			auto addr = Word(i);
 			print_register("C" + std::to_string(i), state.CPU[regs.get_CN(addr)]);
-		}
+		}*/
 	}
 
 	template<size_t IMS, size_t RMS>
@@ -84,10 +85,10 @@ namespace View {
 		print_buses(state);
 
 		cout << endl << "Internal Memory:" << endl;
-		print_memory<IMS>(state.CPU.get_all(), 4);
+		print_memory(state.CPU.get_all(), 4);
 		cout << endl;
 
 		cout << endl << "RAM Memory:" << endl;
-		print_memory<RMS>(state.RAM.get_all(), 4);
+		print_memory(state.RAM.get_all(), 4);
 	}
 }

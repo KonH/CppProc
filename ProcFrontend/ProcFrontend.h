@@ -8,8 +8,8 @@
 
 #include "View.h"
 
-const size_t InternalMemorySize = 40;
-const size_t RamMemorySize      = 64;
+const size_t InternalMemorySize = 10;
+const size_t RamMemorySize      = 16;
 
 using std::cin;
 using std::cout;
@@ -17,10 +17,11 @@ using std::bitset;
 using std::ifstream;
 
 using Core::Computer;
+using Architecture::WordSet;
 
 namespace ProcFrontend {
 	auto read_ram() {
-		bitset<RamMemorySize> set;
+		WordSet<RamMemorySize> result;
 		
 		auto path = "../raw_mem.txt";
 		cout << "Try to read memory from file: " << path << endl;
@@ -28,28 +29,33 @@ namespace ProcFrontend {
 		if (f.is_open()) {
 			cout << "File is opened." << endl;
 			size_t i = 0;
+			size_t j = 0;
 			char c;
+			auto set = Word { 0 };
 			while (f.get(c)) {
 				if (i >= RamMemorySize) {
 					break;
 				}
 				if (c == '1') {
 					set.set(i);
-					i++;
+					j++;
 				} else if (c == '0') {
+					j++;
+				}
+				if ( j == Architecture::WORD_SIZE ) {
+					result[i] = set;
+					set = Word { 0 };
+					j = 0;
 					i++;
 				}
 			}
 			cout << "End of file." << endl;
 			cout << endl;
-			cout << "Readed memory: " << endl;
-			View::print_memory<RamMemorySize>(set, 4);
-			cout << endl;
 			f.close();
 		} else {
 			cout << "Can't open file." << endl;
 		}
-		return set;
+		return result;
 	}
 
 	void run_tests() {

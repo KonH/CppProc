@@ -26,8 +26,9 @@ namespace Logics {
 			_control_bus(control_bus), _address_bus(address_bus), _data_bus(data_bus), _ram(ram) { }
 
 		bool tick() {
-			// 00 - [ 1 - enabled, 0 - disabled ]
-			// 01 - [ 0 - read,    1 - write    ]
+			// 0000 - [ 1 - enabled, 0 - disabled ]
+			// 0001 - [ 0 - read,    1 - write    ]
+			
 			Utils::log_line(
 				"RamRunner.tick(control: ",
 				_control_bus.get_all(),

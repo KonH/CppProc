@@ -5,6 +5,7 @@
 #include "Logger.h"
 #include "CpuRunner.h"
 #include "RamRunner.h"
+#include "Architecture.h"
 #include "ComputerState.h"
 
 using std::bitset;
@@ -12,6 +13,7 @@ using std::bitset;
 using Logics::RamRunner;
 using Logics::CpuRunner;
 using State::ComputerState;
+using Architecture::WordSet;
 using Architecture::RegisterSet;
 
 namespace Core {
@@ -20,10 +22,10 @@ namespace Core {
 		using Regs      = RegisterSet  <InternalMemorySize>;
 		using CompState = ComputerState<InternalMemorySize, RamMemorySize>;
 	public:
-		Regs Registers;
+		Regs      Registers;
 		CompState State;
 
-		Computer(bitset<RamMemorySize> init_ram):State(init_ram) { }
+		Computer(WordSet<RamMemorySize> init_ram):State(init_ram) { }
 
 		bool tick(size_t ticks = 1) {
 			for (size_t i = 0; i < ticks; i++) {

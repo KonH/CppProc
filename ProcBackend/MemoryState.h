@@ -12,22 +12,32 @@ using std::bitset;
 using std::string_view;
 
 using Core::Reference;
+using Architecture::WordSet;
+using Architecture::WORD_SIZE;
 
 namespace State {
 	template<size_t MS>
 	class MemoryState {
 		static_assert(MS > 0);
 	public:
-		MemoryState(string name, bitset<MS> init_memory = { 0 }) :_name(name), _memory(init_memory) {}
+		MemoryState(string name): _name(name) { }
 
-		bitset<MS> get_all() const {
+		MemoryState(string name, WordSet<MS> init_memory) :_name(name) {
+			for ( size_t i = 0; i < MS; i++ ) {
+				for ( size_t j = 0; j < Architecture::WORD_SIZE; j++ ) {
+					_memory[i * Architecture::WORD_SIZE + j] = init_memory[i][j];
+				}
+			}
+		}
+
+		auto get_all() const {
 			return _memory;
 		}
 
 		template<size_t SZ>
 		void set_bits(Reference<SZ> ref, const bitset<SZ>& value) {
-			static_assert(SZ <= MS);
-			BitUtils::set_bits<SZ, MS>(_memory, ref.Address, value);
+			static_assert(SZ <= MS * WORD_SIZE);
+			BitUtils::set_bits<SZ, MS * WORD_SIZE>(_memory, ref.Address, value);
 			Utils::log_line(_name, ": W > ", ref, " = ", value);
 		}
 		
@@ -42,19 +52,19 @@ namespace State {
 		}
 
 	private:
-		const string _name;
-		bitset<MS>   _memory;
+		const string                         _name;
+		bitset<MS * Architecture::WORD_SIZE> _memory = { 0 };
 		
 		template<size_t SZ>
 		auto get_bits(Reference<SZ> ref) const {
-			static_assert(SZ <= MS);
-			auto result = BitUtils::get_bits<SZ, MS>(_memory, ref.Address);
+			static_assert(SZ <= MS * WORD_SIZE);
+			auto result = BitUtils::get_bits<SZ, MS * WORD_SIZE>(_memory, ref.Address);
 			Utils::log_line(_name, ": R < ", ref, " = ", result);
 			return result;
 		}
 	};
 	
-	using ControlBusState = MemoryState<Architecture::CONTROL_BUS_SIZE>;
-	using AddressBusState = MemoryState<Architecture::ADDR_BUS_SIZE>;
-	using DataBusState    = MemoryState<Architecture::DATA_BUS_SIZE>;
+	using ControlBusState = MemoryState<1>;
+	using AddressBusState = MemoryState<1>;
+	using DataBusState    = MemoryState<1>;
 }
