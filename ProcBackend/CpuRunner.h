@@ -27,6 +27,15 @@ using Logics::CpuLogics;
 using Architecture::RegisterSet;
 
 namespace Logics {
+	enum Tick {
+		Fetch     = 0x00,
+		Decode    = 0x01,
+		Read_1    = 0x02,
+		Read_2    = 0x03,
+		Execute_1 = 0x04,
+		Execute_2 = 0x05,
+	};
+	
 	template<size_t IMS, size_t RMS>
 	class CpuRunner {
 		using Regs       = const RegisterSet<IMS>&;
@@ -87,12 +96,12 @@ namespace Logics {
 		CpuCommand _commands;
 
 		map<unsigned long, PipelineStep> _steps = {
-			{ 0b000, &CpuRunner::tick_fetch     }, // request command code
-			{ 0b001, &CpuRunner::tick_decode    }, // save command code, request arg #1, if required
-			{ 0b010, &CpuRunner::tick_read_1    }, // save arg #1, request arg #2, if requred
-			{ 0b011, &CpuRunner::tick_read_2    }, // save arg #2
-			{ 0b100, &CpuRunner::tick_execute_1 }, // execute part 1 with saved code & args
-			{ 0b101, &CpuRunner::tick_execute_2 }, // execute part 2 with saved code & args, if required
+			{ Tick::Fetch,     &CpuRunner::tick_fetch     }, // request command code
+			{ Tick::Decode,    &CpuRunner::tick_decode    }, // save command code, request arg #1, if required
+			{ Tick::Read_1,    &CpuRunner::tick_read_1    }, // save arg #1, request arg #2, if requred
+			{ Tick::Read_2,    &CpuRunner::tick_read_2    }, // save arg #2
+			{ Tick::Execute_1, &CpuRunner::tick_execute_1 }, // execute part 1 with saved code & args
+			{ Tick::Execute_2, &CpuRunner::tick_execute_2 }, // execute part 2 with saved code & args, if required
 		};
 
 		void tick_fetch() {
