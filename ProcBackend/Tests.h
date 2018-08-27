@@ -765,6 +765,88 @@ namespace Tests {
 		}
 	}
 	
+	namespace Cases {
+		void array_sum() {
+			
+			// Common:
+			// - C1 initially contents addr to array size
+			// - Store sum in AR
+			// - Store current index in C1, array size in C2
+			// - Store temp value in C3
+			auto c1 = 0x00;
+			auto c2 = 0x01;
+			auto c3 = 0x03;
+			auto step1 = 0x03;
+			auto step5 = 0x11;
+			auto arr_size_addr = 0x14;
+			auto result_addr = 0x1B;
+			
+			auto cmp = Computer<MIN_MEMORY_SIZE + 3, 0x1C>({
+				// Steps:
+				// 0) Save array size to C2
+				// 0x00            0x01      0x02
+				Word(Command::LD), Word(c1), Word(c2), // load data from ram by address at r[x] to r[y]
+				// 1) Add to AR value in ram by C1
+				// 0x03            0x04      0x05
+				Word(Command::LD), Word(c1), Word(c3), // load data from ram by address at r[x] to r[y]
+				// 0x06              0x07
+				Word(Command::ADDA), Word(c3), // add r[x] to AR register
+				// 2) Increment C1
+				// 0x08             0x09
+				Word(Command::INC), Word(0x00), // increment given common register
+				// 3) If C1 == C2, jump to 5 (todo)
+				// 0x0A             0x0B        0x0C
+				Word(Command::CMP), Word(0x02), Word(0x01), // check r[x] == r[y] set 1 to ZF if true
+				// 0x0D            0x0E
+				Word(Command::JZ), Word(step5), // set IP to x only if ZF == 1
+				// 4) Else, jump to 1
+				// 0x0F             0x10
+				Word(Command::JMP), Word(step1), // set IP to x
+				// 5) Save AR to result
+				// 0x11             0x12
+				Word(Command::STA), Word(0x1B),
+				// 6) Terminate
+				// 0x13
+				Word(Command::RST),
+				// Array size
+				// 0x14
+				Word(0x06),
+				// Array contents (sum = 0x42)
+				// 0x15     0x16        0x17        0x18        0x19        0x1A
+				Word(0x10), Word(0x08), Word(0x08), Word(0x20), Word(0x10), Word(0x02),
+				// Result
+				// 0x1B
+				Word(0x0) // Result
+			});
+			
+			// C1 initially contents addr to array size
+			cmp.State.CPU.set_bits(cmp.Registers.get_CN(0), Word(arr_size_addr));
+			
+			auto result_ref = WReference(result_addr * WORD_SIZE);
+			
+			auto before = cmp.State.RAM[result_ref];
+			assert_equal(before, BitUtils::get_zero(), "before");
+			
+			size_t iters = 0;
+			while ( cmp.tick() ) {
+				iters++;
+				if ( iters > 100 ) {
+					assert_true(false, "infinite loop detected");
+				}
+			}
+			
+			assert_equal(cmp.State.CPU[cmp.Registers.Fatal], BitUtils::get_flag(false), "non fatal");
+			
+			auto after = cmp.State.RAM[result_ref];
+			assert_equal(after, Word(0x42), "after");
+		}
+		
+		void test() {
+			TestRunner tr("cases");
+			//tr.run_test(array_sum, "array_sum");
+		}
+	}
+	
 	void test_all() {
 		Tests::Common::test();
 		Tests::Bits::test();
@@ -773,5 +855,6 @@ namespace Tests {
 		Tests::Architecture::test();
 		Tests::Logics::test();
 		Tests::Commands::test();
+		Tests::Cases::test();
 	}
 }
