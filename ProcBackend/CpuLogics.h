@@ -81,6 +81,31 @@ namespace Logics {
 		auto read_data_bus() {
 			return _data[WReference(0)];
 		}
+		
+		void raise_fatal() {
+			Utils::log_line("CpuLogics.raise_fatal");
+			_cpu.set_bits(_regs.Fatal,      BitUtils::get_flag(true));
+			_cpu.set_bits(_regs.Terminated, BitUtils::get_flag(true));
+		}
+		
+		void inc_counter() {
+			Utils::log_line("CpuLogics.inc_counter");
+			inc_register(_regs.Counter);
+		}
+		
+		void bump_ip(size_t size) {
+			Utils::log_line("CpuLogics.bump_ip(", size, ")");
+			auto overflow = add_to_register(_regs.IP, BitUtils::get_set(Architecture::WORD_SIZE * size));
+			if (overflow) {
+				raise_fatal();
+			}
+		}
+		
+		void set_next_operation(size_t args) {
+			Utils::log_line("CpuLogics.set_next_operation(", args, ")");
+			inc_counter();
+			bump_ip(1 + args);
+		}
 
 	private:
 		RSet       _regs;

@@ -35,6 +35,7 @@ namespace Logics {
 		SUBA = 0x0C,
 		DEC  = 0x0D,
 		DECA = 0x0E,
+		JMP  = 0x0F,
 	};
 	
 	template<size_t IMS>
@@ -93,27 +94,36 @@ namespace Logics {
 			{ Command::SUBA, HANDLER_1 (SUBA) }, // SUBA x _ => acc = acc - r[x]
 			{ Command::DEC,  HANDLER_1 (DEC)  }, // DEC  x _ => r[x] = r[x] - 1
 			{ Command::DECA, HANDLER_0 (DECA) }, // DECA _ _ => AR = AR - 1
+			{ Command::JMP,  HANDLER_1 (JMP)  }, // JMP  x _ => set IP to x
 		};
         
         using CmdArg = const Word&;
 
+		void set_next_op(size_t args) {
+			_logics.set_next_operation(args);
+		}
+		
 		void NOOP() {
 			Utils::log_line("CpuCommands.NOOP");
+			set_next_op(0);
 		}
 
 		void RST() {
 			Utils::log_line("CpuCommands.RST");
 			_cpu.set_bits(_regs.Terminated, bitset<1>(0b1));
+			set_next_op(0);
 		}
 
 		void CLR(CmdArg x) {
 			Utils::log_line("CpuCommands.CLR(x = ", x, ")");
 			_cpu.set_bits(_regs.get_CN(x), BitUtils::get_zero());
+			set_next_op(1);
 		}
 
 		void INC(CmdArg x) {
 			Utils::log_line("CpuCommands.INC(x = ", x, ")");
 			_logics.inc_register(_regs.get_CN(x));
+			set_next_op(1);
 		}
 
 		void SUM(CmdArg x, CmdArg y) {
@@ -123,6 +133,7 @@ namespace Logics {
 			auto[result, overflow] = BitUtils::plus(x_value, y_value);
 			_logics.set_overflow(overflow);
 			_cpu.set_bits(_regs.AR, result);
+			set_next_op(2);
 		}
 
 		void MOV(CmdArg x, CmdArg y) {
@@ -131,21 +142,25 @@ namespace Logics {
 			auto x_value = _cpu[x_addr];
 			auto y_addr = _regs.get_CN(y);
 			_cpu.set_bits(y_addr, x_value);
+			set_next_op(2);
 		}
 
 		void RSTA() {
 			Utils::log_line("CpuCommands.RSTA");
 			_cpu.set_zero(_regs.AR);
+			set_next_op(0);
 		}
 		
 		void INCA() {
 			Utils::log_line("CpuCommands.INCA");
 			_logics.inc_register(_regs.AR);
+			set_next_op(0);
 		}
 		
 		void ADDA(CmdArg x) {
 			Utils::log_line("CpuCommands.ADDA(", x, ")");
 			_logics.add_to_register(_regs.AR, x);
+			set_next_op(1);
 		}
 		
 		bool LD(int step, CmdArg x, CmdArg y) {
@@ -160,6 +175,7 @@ namespace Logics {
 					auto value = _logics.read_data_bus();
 					Utils::log_line("CpuCommands.LD_1: readed value: ", value);
 					_cpu.set_bits(_regs.get_CN(y), value);
+					set_next_op(2);
 					return true;
 			}
 			return true;
@@ -170,6 +186,7 @@ namespace Logics {
 			auto value = _cpu[_regs.get_CN(x)];
 			auto addr = WReference(y.to_ulong());
 			_logics.request_ram_write(addr, value);
+			set_next_op(2);
 		}
 		
 		void SUB(CmdArg x, CmdArg y) {
@@ -177,6 +194,7 @@ namespace Logics {
 			auto xref = _regs.get_CN(x);
 			auto y_value = _cpu[_regs.get_CN(y)];
 			_logics.sub_register(xref, y_value);
+			set_next_op(2);
 		}
 		
 		void SUBA(CmdArg x) {
@@ -184,16 +202,25 @@ namespace Logics {
 			auto xref = _regs.get_CN(x);
 			auto x_value = _cpu[xref];
 			_logics.sub_register(_regs.AR, x_value);
+			set_next_op(1);
 		}
 		
 		void DEC(CmdArg x) {
 			Utils::log_line("CpuCommands.DEC(", x, ")");
 			_logics.dec_register(_regs.get_CN(x));
+			set_next_op(1);
 		}
 		
 		void DECA() {
 			Utils::log_line("CpuCommands.DECA");
 			_logics.dec_register(_regs.AR);
+			set_next_op(0);
+		}
+		
+		void JMP(CmdArg x) {
+			Utils::log_line("CpuCommands.JMP(", x, ")");
+			_logics.inc_counter();
+			_cpu.set_bits(_regs.IP, x);
 		}
 
 	private:

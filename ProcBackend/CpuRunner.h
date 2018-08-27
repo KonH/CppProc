@@ -132,7 +132,7 @@ namespace Logics {
 					_logics.request_ram_read(ip.to_ulong() + 1);
 				}
 			} else {
-				raise_fatal();
+				_logics.raise_fatal();
 			}
 		}
 
@@ -164,14 +164,12 @@ namespace Logics {
 				auto[x, y] = read_args();
 				auto is_done = handler.Func(_commands, 0, x, y);
 				if (!is_terminated()) {
-					if (is_done) {
-						set_next_operation(1 + handler.Arguments);
-					} else {
+					if (!is_done) {
 						_logics.inc_register(PSReference(_regs.PipelineState)); // execute 2
 					}
 				}
 			} else {
-				raise_fatal();
+				_logics.raise_fatal();
 			}
 		}
 		
@@ -180,11 +178,8 @@ namespace Logics {
 			if (auto [has_handler, handler] = get_cur_handler(); has_handler) {
 				auto[x, y] = read_args();
 				handler.Func(_commands, 1, x, y);
-				if (!is_terminated()) {
-					set_next_operation(1 + handler.Arguments);
-				}
 			} else {
-				raise_fatal();
+				_logics.raise_fatal();
 			}
 		}
 
@@ -210,7 +205,7 @@ namespace Logics {
 			}
 			else {
 				Utils::log_line("CpuRunner.get_step: unknown step!");
-				raise_fatal();
+				_logics.raise_fatal();
 			}
 			return &CpuRunner::tick_empty;
 		}
@@ -223,31 +218,6 @@ namespace Logics {
 
 		bool is_terminated() {
 			return _cpu[_regs.Terminated].test(0);
-		}
-
-		void raise_fatal() {
-			Utils::log_line("CpuRunner.raise_fatal");
-			_cpu.set_bits(_regs.Fatal,      BitUtils::get_flag(true));
-			_cpu.set_bits(_regs.Terminated, BitUtils::get_flag(true));
-		}
-
-		void inc_counter() {
-			Utils::log_line("CpuRunner.inc_counter");
-			_logics.inc_register(_regs.Counter);
-		}
-
-		void bump_ip(int size) {
-			Utils::log_line("CpuRunner.bump_ip(", size, ")");
-			auto overflow = _logics.add_to_register(_regs.IP, BitUtils::get_set(Architecture::WORD_SIZE * size));
-			if (overflow) {
-				raise_fatal();
-			}
-		}
-
-		void set_next_operation(int size) {
-			Utils::log_line("CpuRunner.set_next_operation(", size, ")");
-			inc_counter();
-			bump_ip(size);
 		}
 
 		auto read_args() {

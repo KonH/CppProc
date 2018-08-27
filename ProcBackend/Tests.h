@@ -381,6 +381,7 @@ namespace Tests {
 		}
 		
 		void NOOP() {
+			// 0000
 			auto cmp = Computer<MIN_MEMORY_SIZE, 1>( { Command::NOOP } );
 			cmp.tick(3); // fetch, decode, execute
 			auto counter = cmp.State.CPU[cmp.Registers.Counter];
@@ -392,6 +393,7 @@ namespace Tests {
 		}
 		
 		void RST() {
+			// 0001
 			auto cmp = Computer<MIN_MEMORY_SIZE, 2>( { Command::RST, 0b0 } );
 			auto t1_performing = cmp.tick(2); // fetch, decode
 			assert_true(t1_performing, "performing");
@@ -401,6 +403,7 @@ namespace Tests {
 		}
 		
 		void CLR() {
+			// 0010
 			auto cmp = Computer<MIN_MEMORY_SIZE + 1, 2>( { Command::CLR, 0b0 } );
 			auto c0 = cmp.Registers.get_CN(0);
 			cmp.State.CPU.set_bits(c0, BitUtils::get_one());
@@ -412,6 +415,7 @@ namespace Tests {
 		}
 		
 		void INC() {
+			// 0011
 			auto cmp = Computer<MIN_MEMORY_SIZE + 1, 2>( { Command::INC, 0b0 } );
 			auto c0 = cmp.Registers.get_CN(0);
 			cmp.State.CPU.set_bits(c0, BitUtils::get_zero());
@@ -423,6 +427,7 @@ namespace Tests {
 		}
 		
 		void SUM() {
+			// 0100
 			auto cmp = Computer<MIN_MEMORY_SIZE + 2, 3>( { Command::SUM, 0b0, 0b1 } );
 			auto c0 = cmp.Registers.get_CN(0);
 			auto c1 = cmp.Registers.get_CN(1);
@@ -456,6 +461,7 @@ namespace Tests {
 		}
 		
 		void RSTA() {
+			// 0110
 			auto cmp = Computer<MIN_MEMORY_SIZE, 1>( { Command::RSTA } );
 			auto ar = cmp.Registers.AR;
 			cmp.State.CPU.set_bits(ar, BitUtils::get_one());
@@ -470,6 +476,7 @@ namespace Tests {
 		}
 		
 		void INCA() {
+			// 0111
 			auto cmp = Computer<MIN_MEMORY_SIZE, 1>( { Command::INCA } );
 			auto ar = cmp.Registers.AR;
 			
@@ -483,6 +490,7 @@ namespace Tests {
 		}
 		
 		void ADDA() {
+			// 1000
 			auto cmp = Computer<MIN_MEMORY_SIZE + 2, 2>( { Command::ADDA, 0b1 } );
 			cmp.State.CPU.set_bits(cmp.Registers.get_CN(1), BitUtils::get_one());
 			auto ar = cmp.Registers.AR;
@@ -584,7 +592,7 @@ namespace Tests {
 		
 		void DEC() {
 			// DEC  x
-			// 1110 0000
+			// 1101 0000
 			auto cmp = Computer<MIN_MEMORY_SIZE + 1, 2>( { Command::DEC, 0b0 } );
 			auto c0 = cmp.Registers.get_CN(0);
 			cmp.State.CPU.set_bits(c0, BitUtils::get_one());
@@ -597,7 +605,7 @@ namespace Tests {
 		
 		void DECA() {
 			// DECA
-			// 1111
+			// 1110
 			auto cmp = Computer<MIN_MEMORY_SIZE, 1>( { Command::DECA } );
 			auto ar = cmp.Registers.AR;
 			cmp.State.CPU.set_bits(ar, BitUtils::get_one());
@@ -609,6 +617,26 @@ namespace Tests {
 			
 			auto after = cmp.State.CPU[ar];
 			assert_equal(after, BitUtils::get_zero());
+		}
+		
+		void JMP() {
+			// JMP  addr
+			// 0x10 0x03
+			auto cmp = Computer<MIN_MEMORY_SIZE, 4>({
+				// 0x00             // 0x01
+				Word(Command::JMP), Word(0x03),
+				// 0x02
+				Word(Command::RST),
+				// 0x03
+				Word(Command::NOOP),
+			});
+			
+			assert_equal(cmp.State.CPU[cmp.Registers.IP], Word(0x00), "IP before");
+			cmp.tick(4); // jmp: fetch, decode, read 1, execute
+			assert_equal(cmp.State.CPU[cmp.Registers.IP], Word(0x03), "IP after");
+			cmp.tick(3); // noop: fetch, decode, execute
+			assert_equal(cmp.State.CPU[cmp.Registers.Fatal], BitUtils::get_flag(false), "non fatal");
+			assert_equal(cmp.State.CPU[cmp.Registers.Terminated], BitUtils::get_flag(false), "non terminated");
 		}
 		
 		void test() {
@@ -629,6 +657,7 @@ namespace Tests {
 			tr.run_test(SUBA, "SUBA");
 			tr.run_test(DEC, "DEC");
 			tr.run_test(DECA, "DECA");
+			tr.run_test(JMP, "JMP");
 		}
 	}
 	
