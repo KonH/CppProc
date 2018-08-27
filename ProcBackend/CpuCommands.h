@@ -38,6 +38,7 @@ namespace Logics {
 		JMP  = 0x0F,
 		LDA  = 0x10,
 		STA  = 0x11,
+		CMP  = 0x12,
 	};
 	
 	template<size_t IMS>
@@ -100,6 +101,7 @@ namespace Logics {
 			{ Command::JMP,  HANDLER_1 (JMP)  }, // JMP  x _ => set IP to x
 			{ Command::LDA,  HANDLER_1N(LDA)  }, // LDA  x _ => load data from ram by address at r[x] to AR
 			{ Command::STA,  HANDLER_1 (STA)  }, // STA  x _ => store data from AR to ram by address r[x]
+			{ Command::CMP,  HANDLER_2 (CMP)  }, // CMP  x y => check r[x] == r[y] set 1 to ZF if true
 		};
         
         using CmdArg = const Word&;
@@ -252,6 +254,15 @@ namespace Logics {
 			auto addr = WReference(x.to_ulong());
 			_logics.request_ram_write(addr, value);
 			set_next_op(1);
+		}
+		
+		void CMP(CmdArg x, CmdArg y) {
+			Utils::log_line("CpuCommands.CMP(", x, ", ", y, ")");
+			auto x_val = _cpu[_regs.get_CN(x)];
+			auto y_val = _cpu[_regs.get_CN(y)];
+			auto equals = (x_val == y_val);
+			_cpu.set_bits(_regs.Zero, BitUtils::get_flag(equals));
+			set_next_op(2);
 		}
 
 	private:

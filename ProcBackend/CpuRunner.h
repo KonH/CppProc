@@ -124,9 +124,10 @@ namespace Logics {
 			if (auto [has_handler, handler] = get_cur_handler(); has_handler) {
 				auto args = handler.Arguments;
 				if (args == 0) {
+					Utils::log_line("CpuRunner.tick_decode: no args");
 					set_next_step(0b100); // execute
-				}
-				else {
+				} else {
+					Utils::log_line("CpuRunner.tick_decode: ", args > 1 ? "two args" : "one arg");
 					set_next_step(0b010, args > 1); // read #1
 					auto ip = _cpu[_regs.IP];
 					_logics.request_ram_read(ip.to_ulong() + 1);

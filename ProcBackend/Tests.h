@@ -575,7 +575,7 @@ namespace Tests {
 			// 1100 0001
 			// ar = 1, r[1] = 1
 			// expected: ar = 0
-			auto cmp = Computer<MIN_MEMORY_SIZE + 1, 2>( { Command::SUBA, 0b1 } );
+			auto cmp = Computer<MIN_MEMORY_SIZE + 2, 2>( { Command::SUBA, 0b1 } );
 			auto ar = cmp.Registers.AR;
 			auto c1 = cmp.Registers.get_CN(1);
 			
@@ -621,7 +621,7 @@ namespace Tests {
 		
 		void JMP() {
 			// JMP  addr
-			// 0x10 0x03
+			// 0x0F 0x03
 			auto cmp = Computer<MIN_MEMORY_SIZE, 4>({
 				// 0x00             // 0x01
 				Word(Command::JMP), Word(0x03),
@@ -642,7 +642,7 @@ namespace Tests {
 		void LDA() {
 			// desc: LDA   x    mem
 			// addr: 0000 0001 0010
-			// data: 0x11 0011 0110
+			// data: 0x10 0011 0110
 			// x - address in ram
 			// expected: read mem at 0011 (0110) to AR
 			
@@ -661,7 +661,7 @@ namespace Tests {
 		void STA() {
 			// desc: ST   x    mem
 			// addr: 0000 0001 0010
-			// data: 0x12 0001 0000
+			// data: 0x11 0001 0000
 			// ar = 0110
 			// expected: write from ar to mem at y
 			auto cmp = Computer<MIN_MEMORY_SIZE + 1, 3>( { Command::ST, 0b10, 0b0 } );
@@ -672,7 +672,7 @@ namespace Tests {
 			auto before = cmp.State.RAM[mem_at_2];
 			assert_equal(before, BitUtils::get_zero());
 			
-			cmp.tick(4); // fetch, decode, read 2, execute
+			cmp.tick(4); // fetch, decode, read 1, execute
 			
 			auto not_commited = cmp.State.RAM[mem_at_2];
 			assert_equal(not_commited, BitUtils::get_zero());
@@ -681,6 +681,25 @@ namespace Tests {
 			
 			auto after = cmp.State.RAM[mem_at_2];
 			assert_equal(after, Word(0b0110));
+		}
+		
+		void CMP() {
+			// CMP  x    y
+			// 0x12 0x00 0x01
+			{
+				auto cmp = Computer<MIN_MEMORY_SIZE + 2, 3>( { Command::CMP, Word(0x00), Word(0x01) } );
+				cmp.State.CPU.set_bits(cmp.Registers.get_CN(0), Word(0x01));
+				cmp.State.CPU.set_bits(cmp.Registers.get_CN(1), Word(0x02));
+				cmp.tick(5); // fetch, decode, read 1, read 2, execute
+				assert_equal(cmp.State.CPU[cmp.Registers.Zero], BitUtils::get_flag(false), "#1");
+			}
+			{
+				auto cmp = Computer<MIN_MEMORY_SIZE + 2, 3>( { Command::CMP, Word(0x00), Word(0x01) } );
+				cmp.State.CPU.set_bits(cmp.Registers.get_CN(0), Word(0x03));
+				cmp.State.CPU.set_bits(cmp.Registers.get_CN(1), Word(0x03));
+				cmp.tick(5); // fetch, decode, read 1, read 2, execute
+				assert_equal(cmp.State.CPU[cmp.Registers.Zero], BitUtils::get_flag(true), "#2");
+			}
 		}
 		
 		void test() {
@@ -704,6 +723,7 @@ namespace Tests {
 			tr.run_test(JMP, "JMP");
 			tr.run_test(JMP, "LDA");
 			tr.run_test(JMP, "STA");
+			tr.run_test(CMP, "CMP");
 		}
 	}
 	

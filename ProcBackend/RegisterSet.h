@@ -22,73 +22,50 @@ namespace Architecture {
 
 		RegisterSet() = default;
 
-		// Examples below for BaseSize == 4
-
-		// 00 System 0 Pipeline State (000 - Fetch, 001 - Decode, 010 - Read 1th, 011 - Read 2th, 100 - Execute 1, 101 - Execute 2)
-		// 01        1
-		// 02        2
-		// 03        3 Argument mode (is 2th argument required)
+		// System 0 Pipeline State (000 - Fetch, 001 - Decode, 010 - Read 1th, 011 - Read 2th, 100 - Execute 1, 101 - Execute 2)
+		//         1
+		//         2
+		//         3 Argument mode (is 2th argument required)
 		WReference  System        = { get_address_at(0)    , "SS" };
 		PSReference PipelineState = { get_address_at(0) + 0, "PS" };
 		FReference  ArgumentMode  = { get_address_at(0) + 3, "AM" };
 
-		// 04 Command Code
-		// 05
-		// 06
-		// 07
+		// Command Code
 		WReference CommandCode = { get_address_at(1), "CC" };
 
-		// 08 Argument #1
-		// 09
-		// 10
-		// 11
+		// Argument #1
 		WReference Arg1 = { get_address_at(2), "A1" };
 
-		// 12 Argument #2
-		// 13
-		// 14
-		// 15
+		// Argument #2
 		WReference Arg2 = { get_address_at(3), "A2" };
 
-		// 16 Flags 0 Terminated       (execution completed)
-		// 17       1 Integer Overflow (last operation raised overflow)
-		// 18       2 Fatal Error      (IP or Counter is out of range)
-		// 19       3 -
+		// Flags 0 Terminated       (execution completed)
+		//       1 Integer Overflow (last operation raised overflow)
+		//       2 Fatal Error      (IP or Counter is out of range)
+		//       3 Zero Flag        (is last CMP operation succeded)
 		WReference Flags      = { get_address_at(4)    , "FS" };
 		FReference Terminated = { get_address_at(4) + 0, "TR" };
 		FReference Overflow   = { get_address_at(4) + 1, "OF" };
 		FReference Fatal      = { get_address_at(4) + 2, "FT" };
+		FReference Zero       = { get_address_at(4) + 3, "ZF" };
 
-		// 20 Counter (how many commands was processed)
-		// 21
-		// 22
-		// 23
+		// Counter (how many commands was processed)
 		WReference Counter = { get_address_at(5), "CR" };
 
-		// 24 IP (next instruction ram pointer)
-		// 25
-		// 26
-		// 27
+		// IP (next instruction ram pointer)
 		WReference IP = { get_address_at(6), "IP" };
 
-		// 28 AR (accumulator register)
-		// 29
-		// 30
-		// 31
+		// AR (accumulator register)
 		WReference AR = { get_address_at(7), "AR" };
 
-		// 32 CR1 (Common register #1)
-		// 33
-		// 34
-		// 35
+		// CR1 (Common register #1)
 		// ...
-		// N  CRN (Common register #2)
-		// N+1
-		// N+2
-		// N+3
-
+		// CRN (Common register #N)
 		auto get_CN(const Word& index) const {
 			auto index_val = index.to_ulong();
+			if ( index_val >= get_CN_count() ) {
+				throw new std::runtime_error("Invalid C register index");
+			}
 			return get_CN(index_val);
 		}
 		
