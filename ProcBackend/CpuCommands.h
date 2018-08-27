@@ -26,7 +26,7 @@ namespace Logics {
 		INC  = 0x03,
 		SUM  = 0x04,
 		MOV  = 0x05,
-		RSTA = 0x06,
+		CLRA = 0x06,
 		INCA = 0x07,
 		ADDA = 0x08,
 		LD   = 0x09,
@@ -39,6 +39,7 @@ namespace Logics {
 		LDA  = 0x10,
 		STA  = 0x11,
 		CMP  = 0x12,
+		JZ   = 0x13
 	};
 	
 	template<size_t IMS>
@@ -89,7 +90,7 @@ namespace Logics {
 			{ Command::INC,  HANDLER_1 (INC)  }, // INC  x _ => increment given common register
 			{ Command::SUM,  HANDLER_2 (SUM)  }, // SUM  x y => r[y] + r[x] will be saved to AC
 			{ Command::MOV,  HANDLER_2 (MOV)  }, // MOV  x y => move r[x] value to r[y]
-			{ Command::RSTA, HANDLER_0 (RSTA) }, // RSTA _ _ => clear AR register
+			{ Command::CLRA, HANDLER_0 (CLRA) }, // CLRA _ _ => clear AR register
 			{ Command::INCA, HANDLER_0 (INCA) }, // INCA _ _ => increment AR register
 			{ Command::ADDA, HANDLER_1 (ADDA) }, // ADDA x _ => add r[x] to AR register
 			{ Command::LD,   HANDLER_2N(LD)   }, // LD   x y => load data from ram by address at r[x] to r[y]
@@ -102,6 +103,7 @@ namespace Logics {
 			{ Command::LDA,  HANDLER_1N(LDA)  }, // LDA  x _ => load data from ram by address at r[x] to AR
 			{ Command::STA,  HANDLER_1 (STA)  }, // STA  x _ => store data from AR to ram by address r[x]
 			{ Command::CMP,  HANDLER_2 (CMP)  }, // CMP  x y => check r[x] == r[y] set 1 to ZF if true
+			{ Command::JZ,   HANDLER_1 (JZ)   }, // JZ   x _ => set IP to x only if ZF == 1
 		};
         
         using CmdArg = const Word&;
@@ -152,8 +154,8 @@ namespace Logics {
 			set_next_op(2);
 		}
 
-		void RSTA() {
-			Utils::log_line("CpuCommands.RSTA");
+		void CLRA() {
+			Utils::log_line("CpuCommands.CLRA");
 			_cpu.set_zero(_regs.AR);
 			set_next_op(0);
 		}
@@ -263,6 +265,16 @@ namespace Logics {
 			auto equals = (x_val == y_val);
 			_cpu.set_bits(_regs.Zero, BitUtils::get_flag(equals));
 			set_next_op(2);
+		}
+		
+		void JZ(CmdArg x) {
+			Utils::log_line("CpuCommands.JZ(", x, ")");
+			if (_cpu[_regs.Zero].test(0)) {
+				_logics.inc_counter();
+				_cpu.set_bits(_regs.IP, x);
+			} else {
+				set_next_op(1);
+			}
 		}
 
 	private:

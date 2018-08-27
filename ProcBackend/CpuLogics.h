@@ -95,7 +95,7 @@ namespace Logics {
 		
 		void bump_ip(size_t size) {
 			Utils::log_line("CpuLogics.bump_ip(", size, ")");
-			auto overflow = add_to_register(_regs.IP, BitUtils::get_set(Architecture::WORD_SIZE * size));
+			auto overflow = add_to_register(_regs.IP, BitUtils::get_set(size));
 			if (overflow) {
 				raise_fatal();
 			}

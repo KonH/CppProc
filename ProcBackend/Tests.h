@@ -387,7 +387,7 @@ namespace Tests {
 			auto counter = cmp.State.CPU[cmp.Registers.Counter];
 			assert_equal(counter, 0b1);
 			auto ip = cmp.State.CPU[cmp.Registers.IP];
-			assert_equal(ip, WORD_SIZE);
+			assert_equal(ip, 0b1);
 			auto overflow = cmp.State.CPU[cmp.Registers.Overflow];
 			assert_equal(overflow, 0b0);
 		}
@@ -460,9 +460,9 @@ namespace Tests {
 			assert_equal(c0_after, BitUtils::get_one());
 		}
 		
-		void RSTA() {
+		void CLRA() {
 			// 0110
-			auto cmp = Computer<MIN_MEMORY_SIZE, 1>( { Command::RSTA } );
+			auto cmp = Computer<MIN_MEMORY_SIZE, 1>( { Command::CLRA } );
 			auto ar = cmp.Registers.AR;
 			cmp.State.CPU.set_bits(ar, BitUtils::get_one());
 			
@@ -702,6 +702,43 @@ namespace Tests {
 			}
 		}
 		
+		void JZ() {
+			{
+				// JZ  addr
+				// 0x13 0x03
+				auto cmp = Computer<MIN_MEMORY_SIZE, 4>({
+					// 0x00             // 0x01
+					Word(Command::JZ), Word(0x03),
+					// 0x02
+					Word(Command::RST),
+					// 0x03
+					Word(Command::NOOP),
+				});
+				
+				assert_equal(cmp.State.CPU[cmp.Registers.IP], Word(0x00), "IP before #1");
+				cmp.tick(4); // jz: fetch, decode, read 1, execute
+				assert_equal(cmp.State.CPU[cmp.Registers.IP], Word(0x02), "IP after #1");
+			}
+			{
+				// JZ  addr
+				// 0x13 0x03
+				auto cmp = Computer<MIN_MEMORY_SIZE, 4>({
+					// 0x00             // 0x01
+					Word(Command::JZ), Word(0x03),
+					// 0x02
+					Word(Command::RST),
+					// 0x03
+					Word(Command::NOOP),
+				});
+				
+				cmp.State.CPU.set_bits(cmp.Registers.Zero, BitUtils::get_flag(true));
+				
+				assert_equal(cmp.State.CPU[cmp.Registers.IP], Word(0x00), "IP before #2");
+				cmp.tick(4); // jz: fetch, decode, read 1, execute
+				assert_equal(cmp.State.CPU[cmp.Registers.IP], Word(0x03), "IP after #2");
+			}
+		}
+		
 		void test() {
 			TestRunner tr("commands");
 			tr.run_test(unknown, "unknown");
@@ -711,7 +748,7 @@ namespace Tests {
 			tr.run_test(INC, "INC");
 			tr.run_test(SUM, "SUM");
 			tr.run_test(MOV, "MOV");
-			tr.run_test(RSTA, "RSTA");
+			tr.run_test(CLRA, "CLRA");
 			tr.run_test(INCA, "INCA");
 			tr.run_test(ADDA, "ADDA");
 			tr.run_test(LD, "LD");
@@ -724,6 +761,7 @@ namespace Tests {
 			tr.run_test(JMP, "LDA");
 			tr.run_test(JMP, "STA");
 			tr.run_test(CMP, "CMP");
+			tr.run_test(JZ, "JZ");
 		}
 	}
 	
