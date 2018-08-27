@@ -639,6 +639,50 @@ namespace Tests {
 			assert_equal(cmp.State.CPU[cmp.Registers.Terminated], BitUtils::get_flag(false), "non terminated");
 		}
 		
+		void LDA() {
+			// desc: LDA   x    mem
+			// addr: 0000 0001 0010
+			// data: 0x11 0011 0110
+			// x - address in ram
+			// expected: read mem at 0011 (0110) to AR
+			
+			auto cmp = Computer<MIN_MEMORY_SIZE + 1, 3>( { Command::LD, 0b11, 0b110 } );
+			auto ar = cmp.Registers.AR;
+			
+			auto before = cmp.State.CPU[ar];
+			assert_equal(before, BitUtils::get_zero(), "before");
+			
+			cmp.tick(5); // fetch, decode, read 1, execute 1, execute 2
+			
+			auto after = cmp.State.CPU[ar];
+			assert_equal(after, Word(0b0110), "after");
+		}
+		
+		void STA() {
+			// desc: ST   x    mem
+			// addr: 0000 0001 0010
+			// data: 0x12 0001 0000
+			// ar = 0110
+			// expected: write from ar to mem at y
+			auto cmp = Computer<MIN_MEMORY_SIZE + 1, 3>( { Command::ST, 0b10, 0b0 } );
+			auto ar = cmp.Registers.AR;
+			cmp.State.CPU.set_bits(ar, Word(0b0110));
+			
+			auto mem_at_2 = WReference(WORD_SIZE * 2);
+			auto before = cmp.State.RAM[mem_at_2];
+			assert_equal(before, BitUtils::get_zero());
+			
+			cmp.tick(4); // fetch, decode, read 2, execute
+			
+			auto not_commited = cmp.State.RAM[mem_at_2];
+			assert_equal(not_commited, BitUtils::get_zero());
+			
+			cmp.tick_ram();
+			
+			auto after = cmp.State.RAM[mem_at_2];
+			assert_equal(after, Word(0b0110));
+		}
+		
 		void test() {
 			TestRunner tr("commands");
 			tr.run_test(unknown, "unknown");
@@ -658,6 +702,8 @@ namespace Tests {
 			tr.run_test(DEC, "DEC");
 			tr.run_test(DECA, "DECA");
 			tr.run_test(JMP, "JMP");
+			tr.run_test(JMP, "LDA");
+			tr.run_test(JMP, "STA");
 		}
 	}
 	

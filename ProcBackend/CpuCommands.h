@@ -36,6 +36,8 @@ namespace Logics {
 		DEC  = 0x0D,
 		DECA = 0x0E,
 		JMP  = 0x0F,
+		LDA  = 0x10,
+		STA  = 0x11,
 	};
 	
 	template<size_t IMS>
@@ -76,6 +78,7 @@ namespace Logics {
 		#define HANDLER_1(func)  { 1, [](auto c, const int step, const auto& x, const auto& y) { c.func(x);    return true; } }
 		#define HANDLER_2(func)  { 2, [](auto c, const int step, const auto& x, const auto& y) { c.func(x, y); return true; } }
 		
+		#define HANDLER_1N(func) { 1, [](auto c, const int step, const auto& x, const auto& y) { return c.func(step, x);    } }
 		#define HANDLER_2N(func) { 2, [](auto c, const int step, const auto& x, const auto& y) { return c.func(step, x, y); } }
 		
 		map<unsigned long, Handler> _commands = {
@@ -95,6 +98,8 @@ namespace Logics {
 			{ Command::DEC,  HANDLER_1 (DEC)  }, // DEC  x _ => r[x] = r[x] - 1
 			{ Command::DECA, HANDLER_0 (DECA) }, // DECA _ _ => AR = AR - 1
 			{ Command::JMP,  HANDLER_1 (JMP)  }, // JMP  x _ => set IP to x
+			{ Command::LDA,  HANDLER_1N(LDA)  }, // LDA  x _ => load data from ram by address at r[x] to AR
+			{ Command::STA,  HANDLER_1 (STA)  }, // STA  x _ => store data from AR to ram by address r[x]
 		};
         
         using CmdArg = const Word&;
@@ -221,6 +226,32 @@ namespace Logics {
 			Utils::log_line("CpuCommands.JMP(", x, ")");
 			_logics.inc_counter();
 			_cpu.set_bits(_regs.IP, x);
+		}
+		
+		bool LDA(int step, CmdArg x) {
+			switch (step) {
+				case 0:
+					Utils::log_line("CpuCommands.LDA_0(", x, ")");
+					_logics.request_ram_read(WReference(x.to_ulong()));
+					return false;
+					
+				case 1:
+					Utils::log_line("CpuCommands.LDA_1(", x, ")");
+					auto value = _logics.read_data_bus();
+					Utils::log_line("CpuCommands.LDA_1: readed value: ", value);
+					_cpu.set_bits(_regs.AR, value);
+					set_next_op(1);
+					return true;
+			}
+			return true;
+		}
+		
+		void STA(CmdArg x) {
+			Utils::log_line("CpuCommands.STA(", x, ")");
+			auto value = _cpu[_regs.AR];
+			auto addr = WReference(x.to_ulong());
+			_logics.request_ram_write(addr, value);
+			set_next_op(1);
 		}
 
 	private:
