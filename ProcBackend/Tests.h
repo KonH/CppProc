@@ -739,6 +739,15 @@ namespace Tests {
 			}
 		}
 		
+		void SET() {
+			// SET  x    y
+			// 0x14 0x42 0x00
+			// => r[0] = 0x42
+			auto cmp = Computer<MIN_MEMORY_SIZE + 1, 3>({ Word(Command::SET), Word(0x42), Word(0x00) });
+			cmp.tick(5); // set: fetch, decode, read 1, read 2, execute
+			assert_equal(cmp.State.CPU[cmp.Registers.get_CN(0)], Word(0x42));
+		}
+		
 		void test() {
 			TestRunner tr("commands");
 			tr.run_test(unknown, "unknown");
@@ -762,6 +771,7 @@ namespace Tests {
 			tr.run_test(JMP, "STA");
 			tr.run_test(CMP, "CMP");
 			tr.run_test(JZ, "JZ");
+			tr.run_test(SET, "SET");
 		}
 	}
 	
@@ -769,7 +779,6 @@ namespace Tests {
 		void array_sum() {
 			
 			// Common:
-			// - C1 initially contents addr to array size
 			// - Store sum in AR
 			// - Store current index in C1, array size in C2
 			// - Store temp value in C3
@@ -784,8 +793,8 @@ namespace Tests {
 			auto cmp = Computer<MIN_MEMORY_SIZE + 3, 0x1C>({
 				// Steps:
 				// 0) Save array size to C2
-				// 0x00            0x01      0x02
-				Word(Command::LD), Word(c1), Word(c2), // load data from ram by address at r[x] to r[y]
+				// 0x00             0x01                 0x02
+				Word(Command::SET), Word(arr_size_addr), Word(c2), // x y => set value x to r[y]
 				// 1) Add to AR value in ram by C1
 				// 0x03            0x04      0x05
 				Word(Command::LD), Word(c1), Word(c3), // load data from ram by address at r[x] to r[y]
@@ -793,10 +802,10 @@ namespace Tests {
 				Word(Command::ADDA), Word(c3), // add r[x] to AR register
 				// 2) Increment C1
 				// 0x08             0x09
-				Word(Command::INC), Word(0x00), // increment given common register
+				Word(Command::INC), Word(c1), // increment given common register
 				// 3) If C1 == C2, jump to 5 (todo)
 				// 0x0A             0x0B        0x0C
-				Word(Command::CMP), Word(0x02), Word(0x01), // check r[x] == r[y] set 1 to ZF if true
+				Word(Command::CMP), Word(c1), Word(c2), // check r[x] == r[y] set 1 to ZF if true
 				// 0x0D            0x0E
 				Word(Command::JZ), Word(step5), // set IP to x only if ZF == 1
 				// 4) Else, jump to 1
@@ -804,7 +813,7 @@ namespace Tests {
 				Word(Command::JMP), Word(step1), // set IP to x
 				// 5) Save AR to result
 				// 0x11             0x12
-				Word(Command::STA), Word(0x1B),
+				Word(Command::STA), Word(result_addr),
 				// 6) Terminate
 				// 0x13
 				Word(Command::RST),
@@ -818,9 +827,6 @@ namespace Tests {
 				// 0x1B
 				Word(0x0) // Result
 			});
-			
-			// C1 initially contents addr to array size
-			cmp.State.CPU.set_bits(cmp.Registers.get_CN(0), Word(arr_size_addr));
 			
 			auto result_ref = WReference(result_addr * WORD_SIZE);
 			

@@ -39,7 +39,8 @@ namespace Logics {
 		LDA  = 0x10,
 		STA  = 0x11,
 		CMP  = 0x12,
-		JZ   = 0x13
+		JZ   = 0x13,
+		SET  = 0x14,
 	};
 	
 	template<size_t IMS>
@@ -104,6 +105,7 @@ namespace Logics {
 			{ Command::STA,  HANDLER_1 (STA)  }, // STA  x _ => store data from AR to ram by address r[x]
 			{ Command::CMP,  HANDLER_2 (CMP)  }, // CMP  x y => check r[x] == r[y] set 1 to ZF if true
 			{ Command::JZ,   HANDLER_1 (JZ)   }, // JZ   x _ => set IP to x only if ZF == 1
+			{ Command::SET,  HANDLER_2 (SET)  }, // SET  x y => set value x to r[y]
 		};
         
         using CmdArg = const Word&;
@@ -275,6 +277,12 @@ namespace Logics {
 			} else {
 				set_next_op(1);
 			}
+		}
+		
+		void SET(CmdArg x, CmdArg y) {
+			Utils::log_line("CpuCommands.SET(", x, ", ", y, ")");
+			_cpu.set_bits(_regs.get_CN(y), x);
+			set_next_op(2);
 		}
 
 	private:
