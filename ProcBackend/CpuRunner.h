@@ -104,14 +104,18 @@ namespace Logics {
 			{ Tick::Execute_1, &CpuRunner::tick_execute_1 }, // execute part 1 with saved code & args
 			{ Tick::Execute_2, &CpuRunner::tick_execute_2 }, // execute part 2 with saved code & args, if required
 		};
-
-		void tick_fetch() {
-			Utils::log_line(LogType::CpuRunner, "CpuRunner.tick_fetch");
+		
+		void finish_steps() {
+			Utils::log_line(LogType::CpuRunner, "CpuRunner.finish_steps");
 			_cpu.set_zero(_regs.PipelineState);
 			_cpu.set_zero(_regs.ArgumentMode);
 			_cpu.set_zero(_regs.CommandCode);
 			_cpu.set_zero(_regs.Arg1);
 			_cpu.set_zero(_regs.Arg2);
+		}
+
+		void tick_fetch() {
+			Utils::log_line(LogType::CpuRunner, "CpuRunner.tick_fetch");
 			auto ip = _cpu[_regs.IP];
 			WReference command(ip.to_ulong());
 			_logics.request_ram_read(command);
@@ -166,9 +170,13 @@ namespace Logics {
 				auto[x, y] = read_args();
 				auto is_done = handler.Func(_commands, 0, x, y);
 				if (!is_terminated()) {
-					if (!is_done) {
+					if (is_done) {
+						finish_steps();
+					} else {
 						_logics.inc_register(PSReference(_regs.PipelineState)); // execute 2
 					}
+				} else {
+					_logics.raise_fatal();
 				}
 			} else {
 				_logics.raise_fatal();
@@ -180,6 +188,11 @@ namespace Logics {
 			if (auto [has_handler, handler] = get_cur_handler(); has_handler) {
 				auto[x, y] = read_args();
 				handler.Func(_commands, 1, x, y);
+				if (!is_terminated()) {
+					finish_steps();
+				} else {
+					_logics.raise_fatal();
+				}
 			} else {
 				_logics.raise_fatal();
 			}

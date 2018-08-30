@@ -784,7 +784,7 @@ namespace Tests {
 			// - Store temp value in C3
 			auto c1 = 0x00;
 			auto c2 = 0x01;
-			auto c3 = 0x03;
+			auto c3 = 0x02;
 			auto step1 = 0x03;
 			auto step5 = 0x11;
 			auto arr_size_addr = 0x14;
@@ -836,7 +836,7 @@ namespace Tests {
 			size_t iters = 0;
 			while ( cmp.tick() ) {
 				iters++;
-				if ( iters > 100 ) {
+				if ( iters > 10000 ) {
 					assert_true(false, "infinite loop detected");
 				}
 			}
@@ -849,7 +849,7 @@ namespace Tests {
 		
 		void test() {
 			TestRunner tr("cases");
-			//tr.run_test(array_sum, "array_sum");
+			tr.run_test(array_sum, "array_sum");
 		}
 	}
 	
