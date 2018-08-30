@@ -9,6 +9,7 @@
 
 using std::bitset;
 
+using Utils::LogType;
 using Core::FReference;
 using Core::WReference;
 using State::MemoryState;
@@ -30,13 +31,14 @@ namespace Logics {
 			// 0001 - [ 0 - read,    1 - write    ]
 			
 			Utils::log_line(
+				LogType::RamRunner,
 				"RamRunner.tick(control: ",
 				_control_bus.get_all(),
 				", address: ", _address_bus.get_all(),
 				", data: ", _data_bus.get_all(), ")"
 			);
 			auto enabled = is_enabled();
-			Utils::log_line("RamRunner.tick: enabled(", enabled, ")");
+			Utils::log_line(LogType::RamRunner, "RamRunner.tick: enabled(", enabled, ")");
 			if (enabled) {
 				auto addr = _address_bus.get_all();
 				if (is_write()) {
@@ -64,13 +66,13 @@ namespace Logics {
 		}
 		
 		void process_read(const Word& address) {
-			Utils::log_line("RamRunner.process_read(", address, ")");
+			Utils::log_line(LogType::RamRunner, "RamRunner.process_read(", address, ")");
 			auto value = _ram[WReference(address.to_ulong() * Architecture::WORD_SIZE)];
 			_data_bus.set_bits(WReference(0), value);
 		}
 
 		void process_write(const Word& address, const Word& data) {
-			Utils::log_line("RamRunner.process_write(", address, ", ", data, ")");
+			Utils::log_line(LogType::RamRunner, "RamRunner.process_write(", address, ", ", data, ")");
 			_ram.set_bits(WReference(address.to_ulong() * Architecture::WORD_SIZE), data);
 		}
 	};

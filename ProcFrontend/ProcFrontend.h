@@ -74,7 +74,7 @@ namespace ProcFrontend {
 		cout << "=== CppProc ===" << endl;
 		if (is_test_only_mode) {
 			cout << "Test Only Mode" << endl;
-			Utils::enable_log();
+			Utils::enable_all_logs();
 		}
 		cout << endl;
 		
@@ -97,7 +97,7 @@ namespace ProcFrontend {
 			
 			cout << endl;
 			cout << "Operations:" << endl;
-			Utils::enable_log();
+			Utils::enable_all_logs();
 			running = comp.tick();
 			Utils::disable_log();
 			cout << endl;

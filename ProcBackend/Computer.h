@@ -10,6 +10,7 @@
 
 using std::bitset;
 
+using Utils::LogType;
 using Logics::RamRunner;
 using Logics::CpuRunner;
 using State::ComputerState;
@@ -29,10 +30,10 @@ namespace Core {
 
 		bool tick(size_t ticks = 1) {
 			for (size_t i = 0; i < ticks; i++) {
-				Utils::log_line("Computer.tick(", i, ")");
+				Utils::log_line(LogType::Computer, "Computer.tick(", i, ")");
 				auto ram = tick_ram();
 				auto cpu = tick_cpu();
-				Utils::log_line();
+				Utils::log_line(LogType::Computer);
 				auto is_working = ram && cpu;
 				if (!is_working) {
 					return false;

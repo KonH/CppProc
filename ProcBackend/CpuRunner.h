@@ -17,6 +17,7 @@ using std::tuple;
 using std::bitset;
 using std::function;
 
+using Utils::LogType;
 using Core::FReference;
 using Core::WReference;
 using Core::PSReference;
@@ -66,7 +67,7 @@ namespace Logics {
 		_logics(CpuLogics(regs, cpu, control, data, address)), _commands(CpuCommands(regs, cpu, _logics)) {}
 
 		bool tick() {
-			Utils::log_line(
+			Utils::log_line(LogType::CpuRunner,
 				"CpuRunner.tick(control: ",
 				_control.get_all(),
 				", address: ", _address.get_all(),
@@ -76,10 +77,10 @@ namespace Logics {
 			_control.set_zero(CBReference(0));
 
 			if (is_terminated()) {
-				Utils::log_line("CpuRunner.tick: terminated.");
+				Utils::log_line(LogType::CpuRunner, "CpuRunner.tick: terminated.");
 				return false;
 			}
-			Utils::log_line("CpuRunner.tick: continue execution.");
+			Utils::log_line(LogType::CpuRunner, "CpuRunner.tick: continue execution.");
 			auto state = _cpu[_regs.PipelineState];
 			auto step = get_step(state);
 			step(this);
@@ -105,7 +106,7 @@ namespace Logics {
 		};
 
 		void tick_fetch() {
-			Utils::log_line("CpuRunner.tick_fetch");
+			Utils::log_line(LogType::CpuRunner, "CpuRunner.tick_fetch");
 			_cpu.set_zero(_regs.PipelineState);
 			_cpu.set_zero(_regs.ArgumentMode);
 			_cpu.set_zero(_regs.CommandCode);
@@ -118,16 +119,16 @@ namespace Logics {
 		}
 
 		void tick_decode() {
-			Utils::log_line("CpuRunner.tick_decode");
+			Utils::log_line(LogType::CpuRunner, "CpuRunner.tick_decode");
 			auto code = _data[WReference(0)];
 			_cpu.set_bits(WReference(_regs.CommandCode), code);
 			if (auto [has_handler, handler] = get_cur_handler(); has_handler) {
 				auto args = handler.Arguments;
 				if (args == 0) {
-					Utils::log_line("CpuRunner.tick_decode: no args");
+					Utils::log_line(LogType::CpuRunner, "CpuRunner.tick_decode: no args");
 					set_next_step(0b100); // execute
 				} else {
-					Utils::log_line("CpuRunner.tick_decode: ", args > 1 ? "two args" : "one arg");
+					Utils::log_line(LogType::CpuRunner, "CpuRunner.tick_decode: ", args > 1 ? "two args" : "one arg");
 					set_next_step(0b010, args > 1); // read #1
 					auto ip = _cpu[_regs.IP];
 					_logics.request_ram_read(ip.to_ulong() + 1);
@@ -138,9 +139,9 @@ namespace Logics {
 		}
 
 		void tick_read_1() {
-			Utils::log_line("CpuRunner.tick_read_1");
+			Utils::log_line(LogType::CpuRunner, "CpuRunner.tick_read_1");
 			auto arg1 = _logics.read_data_bus();
-			Utils::log_line("CpuRunner.tick_read_1: x = ", arg1);
+			Utils::log_line(LogType::CpuRunner, "CpuRunner.tick_read_1: x = ", arg1);
 			_cpu.set_bits(WReference(_regs.Arg1), arg1);
 			if (_cpu[_regs.ArgumentMode].test(0)) {
 				set_next_step(0b011); // read #2
@@ -152,15 +153,15 @@ namespace Logics {
 		}
 
 		void tick_read_2() {
-			Utils::log_line("CpuRunner.tick_read_2");
+			Utils::log_line(LogType::CpuRunner, "CpuRunner.tick_read_2");
 			auto arg2 = _logics.read_data_bus();
-			Utils::log_line("CpuRunner.tick_read_2: y = ", arg2);
+			Utils::log_line(LogType::CpuRunner, "CpuRunner.tick_read_2: y = ", arg2);
 			_cpu.set_bits(WReference(_regs.Arg2), arg2);
 			_logics.inc_register(PSReference(_regs.PipelineState)); // execute
 		}
 
 		void tick_execute_1() {
-			Utils::log_line("CpuRunner.tick_execute_1");
+			Utils::log_line(LogType::CpuRunner, "CpuRunner.tick_execute_1");
 			if (auto [has_handler, handler] = get_cur_handler(); has_handler) {
 				auto[x, y] = read_args();
 				auto is_done = handler.Func(_commands, 0, x, y);
@@ -175,7 +176,7 @@ namespace Logics {
 		}
 		
 		void tick_execute_2() {
-			Utils::log_line("CpuRunner.tick_execute_2");
+			Utils::log_line(LogType::CpuRunner, "CpuRunner.tick_execute_2");
 			if (auto [has_handler, handler] = get_cur_handler(); has_handler) {
 				auto[x, y] = read_args();
 				handler.Func(_commands, 1, x, y);
@@ -187,12 +188,12 @@ namespace Logics {
 		void tick_empty() {}
 
 		void set_next_step(int step) {
-			Utils::log_line("CpuRunner.set_next_step(", step, ")");
+			Utils::log_line(LogType::CpuRunner, "CpuRunner.set_next_step(", step, ")");
 			_cpu.set_bits(PSReference(_regs.PipelineState), BitUtils::get_set<3>(step));
 		}
 
 		void set_next_step(int step, bool two_args) {
-			Utils::log_line("CpuRunner.set_next_step(", step, ", ", two_args, ")");
+			Utils::log_line(LogType::CpuRunner, "CpuRunner.set_next_step(", step, ", ", two_args, ")");
 			set_next_step(step);
 			_cpu.set_bits(FReference(_regs.ArgumentMode), BitUtils::get_flag(two_args));
 		}
@@ -205,7 +206,7 @@ namespace Logics {
 				return step;
 			}
 			else {
-				Utils::log_line("CpuRunner.get_step: unknown step!");
+				Utils::log_line(LogType::CpuRunner, "CpuRunner.get_step: unknown step!");
 				_logics.raise_fatal();
 			}
 			return &CpuRunner::tick_empty;

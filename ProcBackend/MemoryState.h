@@ -11,6 +11,7 @@
 using std::bitset;
 using std::string_view;
 
+using Utils::LogType;
 using Core::Reference;
 using Architecture::WordSet;
 using Architecture::WORD_SIZE;
@@ -38,7 +39,7 @@ namespace State {
 		void set_bits(Reference<SZ> ref, const bitset<SZ>& value) {
 			static_assert(SZ <= MS * WORD_SIZE);
 			BitUtils::set_bits<SZ, MS * WORD_SIZE>(_memory, ref.Address, value);
-			Utils::log_line(_name, ": W > ", ref, " = ", value);
+			Utils::log_line(LogType::MemoryState, _name, ": W > ", ref, " = ", value);
 		}
 		
 		template<size_t SZ>
@@ -59,7 +60,7 @@ namespace State {
 		auto get_bits(Reference<SZ> ref) const {
 			static_assert(SZ <= MS * WORD_SIZE);
 			auto result = BitUtils::get_bits<SZ, MS * WORD_SIZE>(_memory, ref.Address);
-			Utils::log_line(_name, ": R < ", ref, " = ", result);
+			Utils::log_line(LogType::MemoryState, _name, ": R < ", ref, " = ", result);
 			return result;
 		}
 	};
