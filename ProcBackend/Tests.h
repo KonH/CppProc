@@ -507,18 +507,29 @@ namespace Tests {
 		void LD() {
 			// desc: LD   x    y    mem
 			// addr: 0000 0001 0010 0011
-			// data: 1001 0011 0001 0110
-			// x - address in ram
+			// data: 1001 0000 0001 0110
+			// x - register with address in ram
 			// y - register to save
 			// expected: read mem at 0011 (0110) to r[1]
 
-			auto cmp = Computer<MIN_MEMORY_SIZE + 2, 4>( { Command::LD, 0b11, 0b1, 0b110 } );
+			auto cmp = Computer<MIN_MEMORY_SIZE + 2, 4>({
+				// LD        x     y    data
+				Command::LD, 0b0,  0b1, 0b110
+			});
+			
+			cmp.State.CPU.set_bits(cmp.Registers.get_CN(0), Word(0b0011));
+			
+			
 			auto c1 = cmp.Registers.get_CN(1);
 			
 			auto before = cmp.State.CPU[c1];
 			assert_equal(before, BitUtils::get_zero(), "before");
 			
+			Utils::enable_all_logs();
+			
 			cmp.tick(6); // fetch, decode, read 1, read 2, execute 1, execute 2
+			
+			Utils::disable_log();
 			
 			auto after = cmp.State.CPU[c1];
 			assert_equal(after, Word(0b0110), "after");
@@ -529,8 +540,10 @@ namespace Tests {
 			// addr: 0000 0001 0010 0011
 			// data: 1010 0001 0011 0000
 			// c[1] = 0110
-			// expected: write from c[1] to mem at y
-			auto cmp = Computer<MIN_MEMORY_SIZE + 2, 4>( { Command::ST, 0b1, 0b11, 0b0 } );
+			// expected: write from c[1] to mem at r[0]
+			auto cmp = Computer<MIN_MEMORY_SIZE + 2, 4>( { Command::ST, 0b1, 0b0, 0b0 } );
+			cmp.State.CPU.set_bits(cmp.Registers.get_CN(0), Word(0b11));
+			
 			auto c1 = cmp.Registers.get_CN(1);
 			cmp.State.CPU.set_bits(c1, Word(0b0110));
 			

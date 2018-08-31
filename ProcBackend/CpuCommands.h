@@ -177,18 +177,22 @@ namespace Logics {
 		
 		bool LD(int step, CmdArg x, CmdArg y) {
 			switch (step) {
-				case 0:
+				case 0: {
 					Utils::log_line(LogType::CpuCommands, "CpuCommands.LD_0(", x, ", ", y, ")");
-					_logics.request_ram_read(WReference(x.to_ulong()));
+					auto reg_ref = _regs.get_CN(x);
+					auto reg_value = _cpu[reg_ref].to_ulong();
+					_logics.request_ram_read(WReference(reg_value));
 					return false;
+				}
 					
-				case 1:
+				case 1: {
 					Utils::log_line(LogType::CpuCommands, "CpuCommands.LD_1(", x, ", ", y, ")");
 					auto value = _logics.read_data_bus();
 					Utils::log_line(LogType::CpuCommands, "CpuCommands.LD_1: readed value: ", value);
 					_cpu.set_bits(_regs.get_CN(y), value);
 					set_next_op(2);
 					return true;
+				}
 			}
 			return true;
 		}
@@ -196,7 +200,9 @@ namespace Logics {
 		void ST(CmdArg x, CmdArg y) {
 			Utils::log_line(LogType::CpuCommands, "CpuCommands.ST(", x, ", ", y, ")");
 			auto value = _cpu[_regs.get_CN(x)];
-			auto addr = WReference(y.to_ulong());
+			auto reg_ref = _regs.get_CN(y);
+			auto reg_value = _cpu[reg_ref].to_ulong();
+			auto addr = WReference(reg_value);
 			_logics.request_ram_write(addr, value);
 			set_next_op(2);
 		}
@@ -237,18 +243,22 @@ namespace Logics {
 		
 		bool LDA(int step, CmdArg x) {
 			switch (step) {
-				case 0:
+				case 0: {
 					Utils::log_line(LogType::CpuCommands, "CpuCommands.LDA_0(", x, ")");
-					_logics.request_ram_read(WReference(x.to_ulong()));
+					auto reg_ref = _regs.get_CN(x);
+					auto reg_value = _cpu[reg_ref].to_ulong();
+					_logics.request_ram_read(WReference(reg_value));
 					return false;
+				}
 					
-				case 1:
+				case 1: {
 					Utils::log_line(LogType::CpuCommands, "CpuCommands.LDA_1(", x, ")");
 					auto value = _logics.read_data_bus();
 					Utils::log_line(LogType::CpuCommands, "CpuCommands.LDA_1: readed value: ", value);
 					_cpu.set_bits(_regs.AR, value);
 					set_next_op(1);
 					return true;
+				}
 			}
 			return true;
 		}
@@ -256,7 +266,9 @@ namespace Logics {
 		void STA(CmdArg x) {
 			Utils::log_line(LogType::CpuCommands, "CpuCommands.STA(", x, ")");
 			auto value = _cpu[_regs.AR];
-			auto addr = WReference(x.to_ulong());
+			auto reg_ref = _regs.get_CN(x);
+			auto reg_value = _cpu[reg_ref].to_ulong();
+			auto addr = WReference(reg_value);
 			_logics.request_ram_write(addr, value);
 			set_next_op(1);
 		}
